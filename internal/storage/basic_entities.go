@@ -61,9 +61,7 @@ func (s *Storage) GetSlot(ctx context.Context, entityID string) (models.Slot, er
 	return entity, nil
 }
 
-func (s *Storage) ListSlots(
-	ctx context.Context,
-) ([]models.Slot, error) {
+func (s *Storage) ListSlots(ctx context.Context) ([]models.Slot, error) {
 	result := make([]models.Slot, 0)
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT id, description 
@@ -97,12 +95,12 @@ func (s *Storage) ListSlots(
 	return result, rows.Err()
 }
 
-func (s *Storage) UpdateSlot(ctx context.Context, event models.Slot) error {
+func (s *Storage) UpdateSlot(ctx context.Context, entity models.Slot) error {
 	res, err := s.db.ExecContext(ctx, `UPDATE slots 
 		SET description = $2 
 		WHERE id = $1`,
-		event.ID,
-		event.Description,
+		entity.ID,
+		entity.Description,
 	)
 	if err != nil {
 		return err
@@ -114,7 +112,7 @@ func (s *Storage) UpdateSlot(ctx context.Context, event models.Slot) error {
 	}
 
 	if cnt == 0 {
-		return customerrors.NotFound{Message: fmt.Sprintf("Slot with id = \"%v\" not found", event.ID)}
+		return customerrors.NotFound{Message: fmt.Sprintf("Slot with id = \"%v\" not found", entity.ID)}
 	}
 
 	return nil
@@ -225,12 +223,12 @@ func (s *Storage) ListBanners(
 	return result, rows.Err()
 }
 
-func (s *Storage) UpdateBanner(ctx context.Context, event models.Banner) error {
+func (s *Storage) UpdateBanner(ctx context.Context, entity models.Banner) error {
 	res, err := s.db.ExecContext(ctx, `UPDATE banners 
 		SET description = $2 
 		WHERE id = $1`,
-		event.ID,
-		event.Description,
+		entity.ID,
+		entity.Description,
 	)
 	if err != nil {
 		return err
@@ -242,7 +240,7 @@ func (s *Storage) UpdateBanner(ctx context.Context, event models.Banner) error {
 	}
 
 	if cnt == 0 {
-		return customerrors.NotFound{Message: fmt.Sprintf("Banner with id = \"%v\" not found", event.ID)}
+		return customerrors.NotFound{Message: fmt.Sprintf("Banner with id = \"%v\" not found", entity.ID)}
 	}
 
 	return nil
@@ -353,12 +351,12 @@ func (s *Storage) ListGroups(
 	return result, rows.Err()
 }
 
-func (s *Storage) UpdateGroup(ctx context.Context, event models.Group) error {
+func (s *Storage) UpdateGroup(ctx context.Context, entity models.Group) error {
 	res, err := s.db.ExecContext(ctx, `UPDATE groups 
 		SET description = $2 
 		WHERE id = $1`,
-		event.ID,
-		event.Description,
+		entity.ID,
+		entity.Description,
 	)
 	if err != nil {
 		return err
@@ -370,7 +368,7 @@ func (s *Storage) UpdateGroup(ctx context.Context, event models.Group) error {
 	}
 
 	if cnt == 0 {
-		return customerrors.NotFound{Message: fmt.Sprintf("Group with id = \"%v\" not found", event.ID)}
+		return customerrors.NotFound{Message: fmt.Sprintf("Group with id = \"%v\" not found", entity.ID)}
 	}
 
 	return nil

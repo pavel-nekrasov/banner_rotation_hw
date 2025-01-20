@@ -4,17 +4,17 @@ CREATE table banners (
     description     text
 );
 
-CREATE table slots (
-    id              varchar(255) primary key,
-    description     text
-);
-
 CREATE table groups (
     id              varchar(255) primary key,
     description     text
 );
 
+CREATE table slots (
+    id              varchar(255) primary key,
+    description     text
+);
+
 -- +goose Down
-drop table banners;
 drop table slots;
 drop table groups;
+drop table banners;

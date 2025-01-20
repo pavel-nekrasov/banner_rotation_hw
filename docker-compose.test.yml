@@ -1,0 +1,53 @@
+services:
+
+  migrate:
+    container_name: migrate
+    build:
+      context: .
+      dockerfile: build/Dockerfile_migrate
+    image: migrate_img
+    tty: true
+    stdin_open: true
+    depends_on:
+      rotator_db:
+        condition: service_healthy
+      rotator_mq:
+        condition: service_started
+
+  rotator_db:
+    container_name: rotator_db
+    image: postgres:16.1-alpine3.19
+    environment:
+      - POSTGRES_USER=otus
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=rotator_db
+    volumes:
+      - pgdata_test:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  rotator_mq:
+    container_name: rotator_mq
+    image: rabbitmq:3-management-alpine
+    hostname: rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitdata_test:/var/lib/rabbitmq
+    restart: always
+
+networks:
+  default:
+    name: rotator-network
+
+volumes:
+  pgdata_test:
+  rabbitdata_test:

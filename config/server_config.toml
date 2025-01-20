@@ -1,0 +1,15 @@
+[logger]
+level = "DEBUG"
+output = "stdout"
+
+[endpoint]
+host = ""
+httpPort = 8080
+grpcPort = 15000
+
+[storage]
+host = "rotator_db"
+port = 5432
+dbname = "rotator_db"
+user = "otus"
+password = "password"

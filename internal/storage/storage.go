@@ -34,14 +34,14 @@ func (s *Storage) Close(_ context.Context) error {
 	return s.db.Close()
 }
 
-func (s *Storage) Migrate(_ context.Context, migrate string) (err error) {
+func (s *Storage) Migrate(_ context.Context, dirWithMigrations string) (err error) {
 	//	goose.SetBaseFS(embedMigrations)
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("cannot set dialect: %w", err)
 	}
 
-	if err := goose.Up(s.db, migrate); err != nil {
+	if err := goose.Up(s.db, dirWithMigrations); err != nil {
 		return fmt.Errorf("cannot do up migration: %w", err)
 	}
 

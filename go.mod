@@ -20,5 +20,6 @@ require (
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pressly/goose/v3 v3.24.1
+	github.com/satori/go.uuid v1.2.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
