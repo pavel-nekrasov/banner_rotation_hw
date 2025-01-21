@@ -24,14 +24,14 @@ RUN CGO_ENABLED=0 go build \
 FROM alpine:3.9
 
 LABEL ORGANIZATION="OTUS Online Education"
-LABEL SERVICE="calendar"
+LABEL SERVICE="Banner rotator"
 LABEL MAINTAINERS="sileaudivide@gmail.com"
 
 ENV BIN_FILE "/opt/banner_rotator/migrate"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
 
-ENV CONFIG_FILE /etc/banner_rotator/server_config.toml
-COPY ./config/server_config.toml ${CONFIG_FILE}
+ENV CONFIG_FILE /etc/banner_rotator/migrate_config.toml
+COPY ./config/migrate_config.toml ${CONFIG_FILE}
 COPY ./migrations /migrations
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}

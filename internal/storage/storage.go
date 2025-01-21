@@ -11,7 +11,7 @@ import (
 
 type Storage struct {
 	dsn string
-	db  *sql.DB
+	Db  *sql.DB
 }
 
 func New(host string, port int, dbname, user, password string) *Storage {
@@ -22,16 +22,25 @@ func New(host string, port int, dbname, user, password string) *Storage {
 
 func (s *Storage) Connect(ctx context.Context) error {
 	var err error
-	s.db, err = sql.Open("pgx", s.dsn)
+	s.Db, err = sql.Open("pgx", s.dsn)
 	if err != nil {
 		return fmt.Errorf("cannot open pgx driver: %w", err)
 	}
 
-	return s.db.PingContext(ctx)
+	return s.Db.PingContext(ctx)
 }
 
 func (s *Storage) Close(_ context.Context) error {
-	return s.db.Close()
+	return s.Db.Close()
+}
+
+func (s *Storage) Trucate(ctx context.Context) error {
+	_, err := s.Db.ExecContext(ctx, "TRUNCATE slots CASCADE")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Storage) Migrate(_ context.Context, dirWithMigrations string) (err error) {
@@ -41,7 +50,7 @@ func (s *Storage) Migrate(_ context.Context, dirWithMigrations string) (err erro
 		return fmt.Errorf("cannot set dialect: %w", err)
 	}
 
-	if err := goose.Up(s.db, dirWithMigrations); err != nil {
+	if err := goose.Up(s.Db, dirWithMigrations); err != nil {
 		return fmt.Errorf("cannot do up migration: %w", err)
 	}
 

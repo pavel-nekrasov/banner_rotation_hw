@@ -3,24 +3,32 @@ services:
   migrate:
     container_name: migrate
     build:
-      context: .
-      dockerfile: build/Dockerfile_migrate
+      context: ../
+      dockerfile: ./build/Dockerfile_migrate
     image: migrate_img
-    tty: true
-    stdin_open: true
     depends_on:
       rotator_db:
         condition: service_healthy
+      rotator_mq:
+        condition: service_started
+  
+  rotator_test:
+    container_name: rotator_test
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_test
+    image: test_img
+    depends_on:
+      rotator_db:
+        condition: service_started
       rotator_mq:
         condition: service_started
 
   rotator_db:
     container_name: rotator_db
     image: postgres:16.1-alpine3.19
-    environment:
-      - POSTGRES_USER=otus
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=rotator_db
+    env_file:
+      - ../.env.local
     volumes:
       - pgdata_test:/var/lib/postgresql/data
     ports:
