@@ -8,7 +8,7 @@ CREATE TABLE rotations (
     click_count     bigint not null DEFAULT 1
 );
 
-CREATE UNIQUE INDEX rotations_on_slot_group_idx ON rotations (slot_id, group_id);
+CREATE INDEX rotations_on_slot_group_idx ON rotations (slot_id, group_id);
 CREATE UNIQUE INDEX rotations_on_banner_slot_group_idx ON rotations (banner_id, slot_id, group_id);
 
 -- +goose Down

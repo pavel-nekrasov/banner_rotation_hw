@@ -10,12 +10,12 @@ import (
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/models"
 )
 
-func (s *Storage) AddBannerToSlot(ctx context.Context, slotId models.SlotId, bannerId models.BannerId) error {
-	res, err := s.Db.ExecContext(ctx, `INSERT INTO slot_banners 
+func (s *Storage) AddBannerToSlot(ctx context.Context, slotID models.SlotID, bannerID models.BannerID) error {
+	res, err := s.DB.ExecContext(ctx, `INSERT INTO slot_banners 
 		(slot_id, banner_id) 
 		VALUES ($1, $2)`,
-		slotId,
-		bannerId,
+		slotID,
+		bannerID,
 	)
 	if err != nil {
 		return err
@@ -27,14 +27,16 @@ func (s *Storage) AddBannerToSlot(ctx context.Context, slotId models.SlotId, ban
 	}
 
 	if cnt == 0 {
-		return customerrors.NotFound{Message: fmt.Sprintf("Failed to add banner Id = \"%v\" to slot id = \"%v\"", bannerId, slotId)}
+		return customerrors.NotFound{
+			Message: fmt.Sprintf("Failed to add banner Id = \"%v\" to slot id = \"%v\"", bannerID, slotID),
+		}
 	}
 
 	return nil
 }
 
-func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotId models.SlotId, bannerId models.BannerId) error {
-	res, err := s.Db.ExecContext(ctx, "DELETE FROM slot_banners WHERE slot_id = $1 AND banner_id = $2", slotId, bannerId)
+func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotID models.SlotID, bannerID models.BannerID) error {
+	res, err := s.DB.ExecContext(ctx, "DELETE FROM slot_banners WHERE slot_id = $1 AND banner_id = $2", slotID, bannerID)
 	if err != nil {
 		return err
 	}
@@ -45,20 +47,22 @@ func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotId models.SlotId
 	}
 
 	if cnt == 0 {
-		return customerrors.NotFound{Message: fmt.Sprintf("Banner id = \"%v\" not found in slot id = \"%v\"", bannerId, slotId)}
+		return customerrors.NotFound{
+			Message: fmt.Sprintf("Banner id = \"%v\" not found in slot id = \"%v\"", bannerID, slotID),
+		}
 	}
 
 	return nil
 }
 
-func (s *Storage) ListSlotBanners(ctx context.Context, slotId models.SlotId) ([]models.Banner, error) {
+func (s *Storage) ListSlotBanners(ctx context.Context, slotID models.SlotID) ([]models.Banner, error) {
 	result := make([]models.Banner, 0)
-	rows, err := s.Db.QueryContext(ctx,
+	rows, err := s.DB.QueryContext(ctx,
 		`SELECT b.id, b.description 
 		FROM banners b 
 		INNER JOIN slot_banners sb ON sb.banner_id = b.id 
 		WHERE sb.slot_id = $1`,
-		slotId,
+		slotID,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return result, nil

@@ -1,8 +1,8 @@
 package models
 
-type SlotId string
+type SlotID string
 
 type Slot struct {
-	ID          SlotId
+	ID          SlotID
 	Description string
 }

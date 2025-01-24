@@ -1,8 +1,8 @@
 package models
 
-type BannerId string
+type BannerID string
 
 type Banner struct {
-	ID          BannerId
+	ID          BannerID
 	Description string
 }

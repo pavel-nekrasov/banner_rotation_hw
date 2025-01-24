@@ -30,7 +30,7 @@ services:
     env_file:
       - ../.env.local
     volumes:
-      - pgdata_test:/var/lib/postgresql/data
+      - rotator_pgdata_test:/var/lib/postgresql/data
     ports:
       - 5432:5432
     restart: always
@@ -49,7 +49,7 @@ services:
       - "15672:15672"
       - "5672:5672"
     volumes:
-      - rabbitdata_test:/var/lib/rabbitmq
+      - rotator_rabbitdata_test:/var/lib/rabbitmq
     restart: always
 
 networks:
@@ -57,5 +57,5 @@ networks:
     name: rotator-network
 
 volumes:
-  pgdata_test:
-  rabbitdata_test:
+  rotator_pgdata_test:
+  rotator_rabbitdata_test:

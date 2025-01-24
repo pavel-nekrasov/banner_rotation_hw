@@ -1,7 +1,7 @@
 package models
 
 type Rotation struct {
-	BannerID   BannerId
+	BannerID   BannerID
 	ShowCount  int64
 	ClickCount int64
 }

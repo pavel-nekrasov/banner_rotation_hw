@@ -45,7 +45,13 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	storage := storage.New(config.Storage.Host, config.Storage.Port, config.Storage.DBName, config.Storage.User, config.Storage.Password)
+	storage := storage.New(
+		config.Storage.Host,
+		config.Storage.Port,
+		config.Storage.DBName,
+		config.Storage.User,
+		config.Storage.Password,
+	)
 	err := storage.Connect(ctx)
 	if err != nil {
 		logg.Error("failed to connect to storage: " + err.Error())

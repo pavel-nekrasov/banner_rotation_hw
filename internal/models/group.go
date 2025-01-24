@@ -1,8 +1,8 @@
 package models
 
-type GroupId string
+type GroupID string
 
 type Group struct {
-	ID          GroupId
+	ID          GroupID
 	Description string
 }
