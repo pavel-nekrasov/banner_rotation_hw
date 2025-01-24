@@ -33,7 +33,7 @@ func (s *Storage) CreateSlot(ctx context.Context, entity models.Slot) error {
 	return nil
 }
 
-func (s *Storage) GetSlot(ctx context.Context, entityID string) (models.Slot, error) {
+func (s *Storage) GetSlot(ctx context.Context, entityID models.SlotId) (models.Slot, error) {
 	row := s.Db.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM slots WHERE id = $1`,
@@ -118,7 +118,7 @@ func (s *Storage) UpdateSlot(ctx context.Context, entity models.Slot) error {
 	return nil
 }
 
-func (s *Storage) DeleteSlot(ctx context.Context, entityID string) error {
+func (s *Storage) DeleteSlot(ctx context.Context, entityID models.SlotId) error {
 	res, err := s.Db.ExecContext(ctx, "delete from slots where id = $1", entityID)
 	if err != nil {
 		return err
@@ -159,7 +159,7 @@ func (s *Storage) CreateBanner(ctx context.Context, entity models.Banner) error 
 	return nil
 }
 
-func (s *Storage) GetBanner(ctx context.Context, entityID string) (models.Banner, error) {
+func (s *Storage) GetBanner(ctx context.Context, entityID models.BannerId) (models.Banner, error) {
 	row := s.Db.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM banners WHERE id = $1`,
@@ -187,9 +187,7 @@ func (s *Storage) GetBanner(ctx context.Context, entityID string) (models.Banner
 	return entity, nil
 }
 
-func (s *Storage) ListBanners(
-	ctx context.Context,
-) ([]models.Banner, error) {
+func (s *Storage) ListBanners(ctx context.Context) ([]models.Banner, error) {
 	result := make([]models.Banner, 0)
 	rows, err := s.Db.QueryContext(ctx,
 		`SELECT id, description 
@@ -246,7 +244,7 @@ func (s *Storage) UpdateBanner(ctx context.Context, entity models.Banner) error 
 	return nil
 }
 
-func (s *Storage) DeleteBanner(ctx context.Context, entityID string) error {
+func (s *Storage) DeleteBanner(ctx context.Context, entityID models.BannerId) error {
 	res, err := s.Db.ExecContext(ctx, "delete from banners where id = $1", entityID)
 	if err != nil {
 		return err
@@ -287,7 +285,7 @@ func (s *Storage) CreateGroup(ctx context.Context, entity models.Group) error {
 	return nil
 }
 
-func (s *Storage) GetGroup(ctx context.Context, entityID string) (models.Group, error) {
+func (s *Storage) GetGroup(ctx context.Context, entityID models.GroupId) (models.Group, error) {
 	row := s.Db.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM groups WHERE id = $1`,
@@ -315,9 +313,7 @@ func (s *Storage) GetGroup(ctx context.Context, entityID string) (models.Group, 
 	return entity, nil
 }
 
-func (s *Storage) ListGroups(
-	ctx context.Context,
-) ([]models.Group, error) {
+func (s *Storage) ListGroups(ctx context.Context) ([]models.Group, error) {
 	result := make([]models.Group, 0)
 	rows, err := s.Db.QueryContext(ctx,
 		`SELECT id, description 
@@ -374,7 +370,7 @@ func (s *Storage) UpdateGroup(ctx context.Context, entity models.Group) error {
 	return nil
 }
 
-func (s *Storage) DeleteGroup(ctx context.Context, entityID string) error {
+func (s *Storage) DeleteGroup(ctx context.Context, entityID models.GroupId) error {
 	res, err := s.Db.ExecContext(ctx, "delete from groups where id = $1", entityID)
 	if err != nil {
 		return err

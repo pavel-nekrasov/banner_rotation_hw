@@ -1,4 +1,4 @@
-package integration
+package storageintegration
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func (s *StorageIntegrationSuite) TearDownTest() {
 }
 
 func (s *StorageIntegrationSuite) TestBannerCrud() {
-	itemId := "banner1"
+	itemId := models.BannerId("banner1")
 	item := models.Banner{
 		ID:          itemId,
 		Description: "description",
@@ -69,7 +69,7 @@ func (s *StorageIntegrationSuite) TestBannerCrud() {
 }
 
 func (s *StorageIntegrationSuite) TestGroupCrud() {
-	itemId := "group1"
+	itemId := models.GroupId("group1")
 	item := models.Group{
 		ID:          itemId,
 		Description: "description",
@@ -99,7 +99,7 @@ func (s *StorageIntegrationSuite) TestGroupCrud() {
 }
 
 func (s *StorageIntegrationSuite) TestSlotCrud() {
-	itemId := "slot1"
+	itemId := models.SlotId("slot1")
 	item := models.Slot{
 		ID:          itemId,
 		Description: "description",
@@ -126,4 +126,37 @@ func (s *StorageIntegrationSuite) TestSlotCrud() {
 
 	_, err = s.storage.GetSlot(context.Background(), itemId)
 	s.Require().Error(err)
+}
+
+func (s *StorageIntegrationSuite) TestSlotBanners() {
+	slotId := models.SlotId("slot1")
+	slot := models.Slot{
+		ID:          slotId,
+		Description: "description",
+	}
+	err := s.storage.CreateSlot(context.Background(), slot)
+	s.Require().NoError(err)
+
+	bannerId := models.BannerId("banner1")
+	banner := models.Banner{
+		ID:          bannerId,
+		Description: "description",
+	}
+	err = s.storage.CreateBanner(context.Background(), banner)
+	s.Require().NoError(err)
+
+	err = s.storage.AddBannerToSlot(context.Background(), slotId, bannerId)
+	s.Require().NoError(err)
+
+	banners, err := s.storage.ListSlotBanners(context.Background(), slotId)
+	s.Require().NoError(err)
+	s.Require().Equal(1, len(banners))
+	s.Require().Equal(bannerId, banners[0].ID)
+
+	err = s.storage.RemoveBannerFromSlot(context.Background(), slotId, bannerId)
+	s.Require().NoError(err)
+
+	banners, err = s.storage.ListSlotBanners(context.Background(), slotId)
+	s.Require().NoError(err)
+	s.Require().Equal(0, len(banners))
 }

@@ -2,13 +2,17 @@
 test-env-build:
 	docker compose -f deploy/docker-compose.test.yml build
 test-env-up:
-	docker compose -f deploy/docker-compose.test.yml up -d rotator_db rotator_mq migrate
+	docker compose -f deploy/docker-compose.test.yml up -d rotator_db rotator_mq
 test-env-down:
 	docker compose -f deploy/docker-compose.test.yml down
+
+test-migrate:
+	docker compose -f deploy/docker-compose.test.yml up migrate
 
 integration-test:
 	make test-env-build
 	make test-env-up
+	make test-migrate
 	docker compose -f deploy/docker-compose.test.yml up rotator_test
 	make test-env-down
 

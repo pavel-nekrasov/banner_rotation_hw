@@ -1,20 +1,20 @@
 -- +goose Up
-CREATE table banners (
+CREATE TABLE banners (
     id              varchar(255) primary key,
     description     text
 );
 
-CREATE table groups (
+CREATE TABLE groups (
     id              varchar(255) primary key,
     description     text
 );
 
-CREATE table slots (
+CREATE TABLE slots (
     id              varchar(255) primary key,
     description     text
 );
 
 -- +goose Down
-drop table slots;
-drop table groups;
-drop table banners;
+DROP TABLE slots;
+DROP TABLE groups;
+DROP TABLE banners;
