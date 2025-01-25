@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/customerrors"
-	"github.com/pavel-nekrasov/banner_rotation_hw/internal/models"
+	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
 
-func (s *Storage) AddBannerToSlot(ctx context.Context, slotID models.SlotID, bannerID models.BannerID) error {
+func (s *Storage) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
 	res, err := s.DB.ExecContext(ctx, `INSERT INTO slot_banners 
 		(slot_id, banner_id) 
 		VALUES ($1, $2)`,
@@ -35,7 +35,7 @@ func (s *Storage) AddBannerToSlot(ctx context.Context, slotID models.SlotID, ban
 	return nil
 }
 
-func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotID models.SlotID, bannerID models.BannerID) error {
+func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
 	res, err := s.DB.ExecContext(ctx, "DELETE FROM slot_banners WHERE slot_id = $1 AND banner_id = $2", slotID, bannerID)
 	if err != nil {
 		return err
@@ -55,8 +55,41 @@ func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotID models.SlotID
 	return nil
 }
 
-func (s *Storage) ListSlotBanners(ctx context.Context, slotID models.SlotID) ([]models.Banner, error) {
-	result := make([]models.Banner, 0)
+func (s *Storage) GetSlotBanner(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) (domain.Banner, error) {
+	row := s.DB.QueryRowContext(ctx,
+		`SELECT b.id, b.description 
+		FROM banners b 
+		INNER JOIN slot_banners sb ON sb.banner_id = b.id 
+		WHERE sb.slot_id = $1 AND sb.banner_id = $2`,
+		slotID,
+		bannerID,
+	)
+	if errors.Is(row.Err(), sql.ErrNoRows) {
+		return domain.Banner{}, customerrors.NotFound{
+			Message: fmt.Sprintf("Slot id = \"%v\" does not containt banner id = %v", slotID, bannerID),
+		}
+	}
+	if row.Err() != nil {
+		return domain.Banner{}, row.Err()
+	}
+	var entity domain.Banner
+	var description sql.NullString
+	err := row.Scan(&entity.ID,
+		&description,
+	)
+	if err != nil {
+		return domain.Banner{}, err
+	}
+
+	if description.Valid {
+		entity.Description = description.String
+	}
+
+	return entity, nil
+}
+
+func (s *Storage) ListSlotBanners(ctx context.Context, slotID domain.SlotID) ([]domain.Banner, error) {
+	result := make([]domain.Banner, 0)
 	rows, err := s.DB.QueryContext(ctx,
 		`SELECT b.id, b.description 
 		FROM banners b 
@@ -74,7 +107,7 @@ func (s *Storage) ListSlotBanners(ctx context.Context, slotID models.SlotID) ([]
 	defer rows.Close()
 
 	for rows.Next() {
-		var entity models.Banner
+		var entity domain.Banner
 		var description sql.NullString
 		err := rows.Scan(&entity.ID,
 			&description,

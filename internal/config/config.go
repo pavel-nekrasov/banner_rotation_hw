@@ -11,10 +11,16 @@ const (
 	StorageModeMemory   = "memory"
 )
 
+type MigratorConfig struct {
+	Logger  LoggerConf
+	Storage StorageConf
+}
+
 type ServerConfig struct {
 	Logger   LoggerConf
 	Endpoint EndpointConf
 	Storage  StorageConf
+	Cache    CacheConf
 }
 
 type LoggerConf struct {
@@ -37,7 +43,20 @@ type StorageConf struct {
 	Password string
 }
 
-func NewServerConfig(filePath string) (c ServerConfig) {
+type CacheConf struct {
+	L1Capacity int
+	L2Capacity int
+}
+
+func NewRotatorConfig(filePath string) (c ServerConfig) {
+	_, err := toml.DecodeFile(filePath, &c)
+	if err != nil {
+		log.Fatalf("Failed to load config file: %v", err)
+	}
+	return c
+}
+
+func NewMigratorConfig(filePath string) (c MigratorConfig) {
 	_, err := toml.DecodeFile(filePath, &c)
 	if err != nil {
 		log.Fatalf("Failed to load config file: %v", err)

@@ -5,6 +5,7 @@ import "sync"
 type LruCache[K comparable, D interface{}] interface {
 	Set(key K, value D) bool
 	Get(key K) (D, bool)
+	Remove(key K)
 	Clear()
 }
 
@@ -59,6 +60,15 @@ func (c *lruCache[K, D]) Get(key K) (D, bool) {
 
 	var result D
 	return result, false
+}
+
+func (c *lruCache[K, D]) Remove(key K) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if item, ok := c.items[key]; ok {
+		c.removeItem(item)
+	}
 }
 
 func (c *lruCache[K, D]) Clear() {

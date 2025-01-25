@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/config"
-	"github.com/pavel-nekrasov/banner_rotation_hw/internal/models"
+	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/storage"
 	"github.com/stretchr/testify/suite"
 )
@@ -21,7 +21,7 @@ func TestStorageIntegrationSuite(t *testing.T) {
 }
 
 func (s *StorageIntegrationSuite) SetupSuite() {
-	config := config.NewServerConfig("/app/config/server_config.toml")
+	config := config.NewRotatorConfig("/app/config/server_config.toml")
 	s.storage = storage.New(
 		config.Storage.Host,
 		config.Storage.Port,
@@ -45,8 +45,8 @@ func (s *StorageIntegrationSuite) TearDownTest() {
 }
 
 func (s *StorageIntegrationSuite) TestBannerCrud() {
-	itemID := models.BannerID("banner1")
-	item := models.Banner{
+	itemID := domain.BannerID("banner1")
+	item := domain.Banner{
 		ID:          itemID,
 		Description: "banner description",
 	}
@@ -59,7 +59,7 @@ func (s *StorageIntegrationSuite) TestBannerCrud() {
 	s.Require().Equal(item.Description, dbItem.Description)
 
 	updatedDescription := "banner description upd"
-	err = s.storage.UpdateBanner(context.Background(), models.Banner{ID: itemID, Description: updatedDescription})
+	err = s.storage.UpdateBanner(context.Background(), domain.Banner{ID: itemID, Description: updatedDescription})
 	s.Require().NoError(err)
 
 	dbItem, err = s.storage.GetBanner(context.Background(), itemID)
@@ -75,8 +75,8 @@ func (s *StorageIntegrationSuite) TestBannerCrud() {
 }
 
 func (s *StorageIntegrationSuite) TestGroupCrud() {
-	itemID := models.GroupID("group1")
-	item := models.Group{
+	itemID := domain.GroupID("group1")
+	item := domain.Group{
 		ID:          itemID,
 		Description: "group description",
 	}
@@ -89,7 +89,7 @@ func (s *StorageIntegrationSuite) TestGroupCrud() {
 	s.Require().Equal(item.Description, dbItem.Description)
 
 	updatedDescription := "group description upd"
-	err = s.storage.UpdateGroup(context.Background(), models.Group{ID: itemID, Description: updatedDescription})
+	err = s.storage.UpdateGroup(context.Background(), domain.Group{ID: itemID, Description: updatedDescription})
 	s.Require().NoError(err)
 
 	dbItem, err = s.storage.GetGroup(context.Background(), itemID)
@@ -105,8 +105,8 @@ func (s *StorageIntegrationSuite) TestGroupCrud() {
 }
 
 func (s *StorageIntegrationSuite) TestSlotCrud() {
-	itemID := models.SlotID("slot1")
-	item := models.Slot{
+	itemID := domain.SlotID("slot1")
+	item := domain.Slot{
 		ID:          itemID,
 		Description: "slot description",
 	}
@@ -119,7 +119,7 @@ func (s *StorageIntegrationSuite) TestSlotCrud() {
 	s.Require().Equal(item.Description, dbItem.Description)
 
 	updatedDescription := "slot description upd"
-	err = s.storage.UpdateSlot(context.Background(), models.Slot{ID: itemID, Description: updatedDescription})
+	err = s.storage.UpdateSlot(context.Background(), domain.Slot{ID: itemID, Description: updatedDescription})
 	s.Require().NoError(err)
 
 	dbItem, err = s.storage.GetSlot(context.Background(), itemID)
@@ -135,16 +135,16 @@ func (s *StorageIntegrationSuite) TestSlotCrud() {
 }
 
 func (s *StorageIntegrationSuite) TestSlotBanners() {
-	slotID := models.SlotID("slot1")
-	slot := models.Slot{
+	slotID := domain.SlotID("slot1")
+	slot := domain.Slot{
 		ID:          slotID,
 		Description: "description",
 	}
 	err := s.storage.CreateSlot(context.Background(), slot)
 	s.Require().NoError(err)
 
-	bannerID := models.BannerID("banner1")
-	banner := models.Banner{
+	bannerID := domain.BannerID("banner1")
+	banner := domain.Banner{
 		ID:          bannerID,
 		Description: "description",
 	}
@@ -168,32 +168,32 @@ func (s *StorageIntegrationSuite) TestSlotBanners() {
 }
 
 func (s *StorageIntegrationSuite) TestRotations() {
-	slotID := models.SlotID("slot1")
-	slot := models.Slot{
+	slotID := domain.SlotID("slot1")
+	slot := domain.Slot{
 		ID:          slotID,
 		Description: "description",
 	}
 	err := s.storage.CreateSlot(context.Background(), slot)
 	s.Require().NoError(err)
 
-	bannerID := models.BannerID("banner1")
-	banner := models.Banner{
+	bannerID := domain.BannerID("banner1")
+	banner := domain.Banner{
 		ID:          bannerID,
 		Description: "description",
 	}
 	err = s.storage.CreateBanner(context.Background(), banner)
 	s.Require().NoError(err)
 
-	banner2ID := models.BannerID("banner2")
-	banner2 := models.Banner{
+	banner2ID := domain.BannerID("banner2")
+	banner2 := domain.Banner{
 		ID:          banner2ID,
 		Description: "description",
 	}
 	err = s.storage.CreateBanner(context.Background(), banner2)
 	s.Require().NoError(err)
 
-	groupID := models.GroupID("group1")
-	group := models.Group{
+	groupID := domain.GroupID("group1")
+	group := domain.Group{
 		ID:          groupID,
 		Description: "description",
 	}

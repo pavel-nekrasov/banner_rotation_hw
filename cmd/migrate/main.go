@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	config := config.NewServerConfig(configFile)
+	config := config.NewMigratorConfig(configFile)
 	logg := logger.New(config.Logger.Level, config.Logger.Output)
 	defer logg.Close()
 

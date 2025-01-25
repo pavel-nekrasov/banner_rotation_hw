@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/customerrors"
-	"github.com/pavel-nekrasov/banner_rotation_hw/internal/models"
+	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
 
-func (s *Storage) CreateSlot(ctx context.Context, entity models.Slot) error {
+func (s *Storage) CreateSlot(ctx context.Context, entity domain.Slot) error {
 	res, err := s.DB.ExecContext(ctx, `INSERT INTO slots 
 		(id, description) 
 		VALUES ($1, $2)`,
@@ -33,25 +33,25 @@ func (s *Storage) CreateSlot(ctx context.Context, entity models.Slot) error {
 	return nil
 }
 
-func (s *Storage) GetSlot(ctx context.Context, entityID models.SlotID) (models.Slot, error) {
+func (s *Storage) GetSlot(ctx context.Context, entityID domain.SlotID) (domain.Slot, error) {
 	row := s.DB.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM slots WHERE id = $1`,
 		entityID,
 	)
 	if errors.Is(row.Err(), sql.ErrNoRows) {
-		return models.Slot{}, customerrors.NotFound{Message: fmt.Sprintf("Slot with id = \"%v\" not found", entityID)}
+		return domain.Slot{}, customerrors.NotFound{Message: fmt.Sprintf("Slot with id = \"%v\" not found", entityID)}
 	}
 	if row.Err() != nil {
-		return models.Slot{}, row.Err()
+		return domain.Slot{}, row.Err()
 	}
-	var entity models.Slot
+	var entity domain.Slot
 	var description sql.NullString
 	err := row.Scan(&entity.ID,
 		&description,
 	)
 	if err != nil {
-		return models.Slot{}, err
+		return domain.Slot{}, err
 	}
 
 	if description.Valid {
@@ -61,8 +61,8 @@ func (s *Storage) GetSlot(ctx context.Context, entityID models.SlotID) (models.S
 	return entity, nil
 }
 
-func (s *Storage) ListSlots(ctx context.Context) ([]models.Slot, error) {
-	result := make([]models.Slot, 0)
+func (s *Storage) ListSlots(ctx context.Context) ([]domain.Slot, error) {
+	result := make([]domain.Slot, 0)
 	rows, err := s.DB.QueryContext(ctx,
 		`SELECT id, description 
 		FROM slots `,
@@ -77,7 +77,7 @@ func (s *Storage) ListSlots(ctx context.Context) ([]models.Slot, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var entity models.Slot
+		var entity domain.Slot
 		var description sql.NullString
 		err := rows.Scan(&entity.ID,
 			&description,
@@ -95,7 +95,7 @@ func (s *Storage) ListSlots(ctx context.Context) ([]models.Slot, error) {
 	return result, rows.Err()
 }
 
-func (s *Storage) UpdateSlot(ctx context.Context, entity models.Slot) error {
+func (s *Storage) UpdateSlot(ctx context.Context, entity domain.Slot) error {
 	res, err := s.DB.ExecContext(ctx, `UPDATE slots 
 		SET description = $2 
 		WHERE id = $1`,
@@ -118,7 +118,7 @@ func (s *Storage) UpdateSlot(ctx context.Context, entity models.Slot) error {
 	return nil
 }
 
-func (s *Storage) DeleteSlot(ctx context.Context, entityID models.SlotID) error {
+func (s *Storage) DeleteSlot(ctx context.Context, entityID domain.SlotID) error {
 	res, err := s.DB.ExecContext(ctx, "delete from slots where id = $1", entityID)
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func (s *Storage) DeleteSlot(ctx context.Context, entityID models.SlotID) error 
 	return nil
 }
 
-func (s *Storage) CreateBanner(ctx context.Context, entity models.Banner) error {
+func (s *Storage) CreateBanner(ctx context.Context, entity domain.Banner) error {
 	res, err := s.DB.ExecContext(ctx, `INSERT INTO banners 
 		(id, description) 
 		VALUES ($1, $2)`,
@@ -159,25 +159,25 @@ func (s *Storage) CreateBanner(ctx context.Context, entity models.Banner) error 
 	return nil
 }
 
-func (s *Storage) GetBanner(ctx context.Context, entityID models.BannerID) (models.Banner, error) {
+func (s *Storage) GetBanner(ctx context.Context, entityID domain.BannerID) (domain.Banner, error) {
 	row := s.DB.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM banners WHERE id = $1`,
 		entityID,
 	)
 	if errors.Is(row.Err(), sql.ErrNoRows) {
-		return models.Banner{}, customerrors.NotFound{Message: fmt.Sprintf("Banner with id = \"%v\" not found", entityID)}
+		return domain.Banner{}, customerrors.NotFound{Message: fmt.Sprintf("Banner with id = \"%v\" not found", entityID)}
 	}
 	if row.Err() != nil {
-		return models.Banner{}, row.Err()
+		return domain.Banner{}, row.Err()
 	}
-	var entity models.Banner
+	var entity domain.Banner
 	var description sql.NullString
 	err := row.Scan(&entity.ID,
 		&description,
 	)
 	if err != nil {
-		return models.Banner{}, err
+		return domain.Banner{}, err
 	}
 
 	if description.Valid {
@@ -187,8 +187,8 @@ func (s *Storage) GetBanner(ctx context.Context, entityID models.BannerID) (mode
 	return entity, nil
 }
 
-func (s *Storage) ListBanners(ctx context.Context) ([]models.Banner, error) {
-	result := make([]models.Banner, 0)
+func (s *Storage) ListBanners(ctx context.Context) ([]domain.Banner, error) {
+	result := make([]domain.Banner, 0)
 	rows, err := s.DB.QueryContext(ctx,
 		`SELECT id, description 
 		FROM banners `,
@@ -203,7 +203,7 @@ func (s *Storage) ListBanners(ctx context.Context) ([]models.Banner, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var entity models.Banner
+		var entity domain.Banner
 		var description sql.NullString
 		err := rows.Scan(&entity.ID,
 			&description,
@@ -221,7 +221,7 @@ func (s *Storage) ListBanners(ctx context.Context) ([]models.Banner, error) {
 	return result, rows.Err()
 }
 
-func (s *Storage) UpdateBanner(ctx context.Context, entity models.Banner) error {
+func (s *Storage) UpdateBanner(ctx context.Context, entity domain.Banner) error {
 	res, err := s.DB.ExecContext(ctx, `UPDATE banners 
 		SET description = $2 
 		WHERE id = $1`,
@@ -244,7 +244,7 @@ func (s *Storage) UpdateBanner(ctx context.Context, entity models.Banner) error 
 	return nil
 }
 
-func (s *Storage) DeleteBanner(ctx context.Context, entityID models.BannerID) error {
+func (s *Storage) DeleteBanner(ctx context.Context, entityID domain.BannerID) error {
 	res, err := s.DB.ExecContext(ctx, "delete from banners where id = $1", entityID)
 	if err != nil {
 		return err
@@ -262,7 +262,7 @@ func (s *Storage) DeleteBanner(ctx context.Context, entityID models.BannerID) er
 	return nil
 }
 
-func (s *Storage) CreateGroup(ctx context.Context, entity models.Group) error {
+func (s *Storage) CreateGroup(ctx context.Context, entity domain.Group) error {
 	res, err := s.DB.ExecContext(ctx, `INSERT INTO groups 
 		(id, description) 
 		VALUES ($1, $2)`,
@@ -285,25 +285,25 @@ func (s *Storage) CreateGroup(ctx context.Context, entity models.Group) error {
 	return nil
 }
 
-func (s *Storage) GetGroup(ctx context.Context, entityID models.GroupID) (models.Group, error) {
+func (s *Storage) GetGroup(ctx context.Context, entityID domain.GroupID) (domain.Group, error) {
 	row := s.DB.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM groups WHERE id = $1`,
 		entityID,
 	)
 	if errors.Is(row.Err(), sql.ErrNoRows) {
-		return models.Group{}, customerrors.NotFound{Message: fmt.Sprintf("Group with id = \"%v\" not found", entityID)}
+		return domain.Group{}, customerrors.NotFound{Message: fmt.Sprintf("Group with id = \"%v\" not found", entityID)}
 	}
 	if row.Err() != nil {
-		return models.Group{}, row.Err()
+		return domain.Group{}, row.Err()
 	}
-	var entity models.Group
+	var entity domain.Group
 	var description sql.NullString
 	err := row.Scan(&entity.ID,
 		&description,
 	)
 	if err != nil {
-		return models.Group{}, err
+		return domain.Group{}, err
 	}
 
 	if description.Valid {
@@ -313,8 +313,8 @@ func (s *Storage) GetGroup(ctx context.Context, entityID models.GroupID) (models
 	return entity, nil
 }
 
-func (s *Storage) ListGroups(ctx context.Context) ([]models.Group, error) {
-	result := make([]models.Group, 0)
+func (s *Storage) ListGroups(ctx context.Context) ([]domain.Group, error) {
+	result := make([]domain.Group, 0)
 	rows, err := s.DB.QueryContext(ctx,
 		`SELECT id, description 
 		FROM groups `,
@@ -329,7 +329,7 @@ func (s *Storage) ListGroups(ctx context.Context) ([]models.Group, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var entity models.Group
+		var entity domain.Group
 		var description sql.NullString
 		err := rows.Scan(&entity.ID,
 			&description,
@@ -347,7 +347,7 @@ func (s *Storage) ListGroups(ctx context.Context) ([]models.Group, error) {
 	return result, rows.Err()
 }
 
-func (s *Storage) UpdateGroup(ctx context.Context, entity models.Group) error {
+func (s *Storage) UpdateGroup(ctx context.Context, entity domain.Group) error {
 	res, err := s.DB.ExecContext(ctx, `UPDATE groups 
 		SET description = $2 
 		WHERE id = $1`,
@@ -370,7 +370,7 @@ func (s *Storage) UpdateGroup(ctx context.Context, entity models.Group) error {
 	return nil
 }
 
-func (s *Storage) DeleteGroup(ctx context.Context, entityID models.GroupID) error {
+func (s *Storage) DeleteGroup(ctx context.Context, entityID domain.GroupID) error {
 	res, err := s.DB.ExecContext(ctx, "delete from groups where id = $1", entityID)
 	if err != nil {
 		return err
