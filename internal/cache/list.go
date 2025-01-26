@@ -1,5 +1,7 @@
 package cache
 
+import "sync"
+
 type LinkedList[T interface{}] interface {
 	Len() int
 	Front() *ListItem[T]
@@ -11,6 +13,7 @@ type LinkedList[T interface{}] interface {
 }
 
 type list[T interface{}] struct {
+	mut   sync.RWMutex
 	front *ListItem[T]
 	back  *ListItem[T]
 	len   int
@@ -20,19 +23,31 @@ func NewList[T interface{}]() LinkedList[T] {
 	return new(list[T])
 }
 
-func (l list[T]) Len() int {
+func (l *list[T]) Len() int {
+	l.mut.RLock()
+	defer l.mut.RUnlock()
+
 	return l.len
 }
 
-func (l list[T]) Front() *ListItem[T] {
+func (l *list[T]) Front() *ListItem[T] {
+	l.mut.RLock()
+	defer l.mut.RUnlock()
+
 	return l.front
 }
 
-func (l list[T]) Back() *ListItem[T] {
+func (l *list[T]) Back() *ListItem[T] {
+	l.mut.RLock()
+	defer l.mut.RUnlock()
+
 	return l.back
 }
 
 func (l *list[T]) PushFront(v T) *ListItem[T] {
+	l.mut.Lock()
+	defer l.mut.Unlock()
+
 	i := &ListItem[T]{Value: v, Next: l.front}
 
 	if l.front != nil {
@@ -46,6 +61,9 @@ func (l *list[T]) PushFront(v T) *ListItem[T] {
 }
 
 func (l *list[T]) PushBack(v T) *ListItem[T] {
+	l.mut.Lock()
+	defer l.mut.Unlock()
+
 	i := &ListItem[T]{Value: v, Next: nil, Prev: l.back}
 	if l.back != nil {
 		i.wire(l.back)
@@ -58,6 +76,9 @@ func (l *list[T]) PushBack(v T) *ListItem[T] {
 }
 
 func (l *list[T]) Remove(i *ListItem[T]) {
+	l.mut.Lock()
+	defer l.mut.Unlock()
+
 	if i == nil {
 		return
 	}
@@ -79,6 +100,9 @@ func (l *list[T]) Remove(i *ListItem[T]) {
 }
 
 func (l *list[T]) MoveToFront(i *ListItem[T]) {
+	l.mut.Lock()
+	defer l.mut.Unlock()
+
 	if i == nil {
 		return
 	}

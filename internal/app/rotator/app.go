@@ -3,7 +3,6 @@ package rotatorapp
 import (
 	"context"
 	"errors"
-	"math"
 	"sync"
 
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/cache"
@@ -13,22 +12,18 @@ import (
 )
 
 type (
-	bannersCache map[domain.BannerID]struct{}
-	statData     struct {
-		totalShowCount int64
-		bestBannerID   domain.BannerID
-		bannerStats    map[domain.BannerID]*domain.BannerStat
-	}
-	slotRotationsCache cache.LruCache[domain.SlotID, statData]
-	rotationsCache     cache.LruCache[domain.GroupID, slotRotationsCache]
+	bannersCache cache.Cache[domain.BannerID, struct{}]
+
+	slotRotationsCache cache.Cache[domain.SlotID, statData]
+	rotationsCache     cache.Cache[domain.GroupID, slotRotationsCache]
 )
 
 type App struct {
 	logger           common.Logger
 	storage          Storage
 	config           config.CacheConf
-	mutSlotBanners   sync.Mutex
-	slotBannersCache cache.LruCache[domain.SlotID, bannersCache]
+	mutSlotBanners   sync.RWMutex
+	slotBannersCache cache.Cache[domain.SlotID, bannersCache]
 	mut              sync.Mutex
 	rotationsCache   rotationsCache
 }
@@ -83,8 +78,8 @@ func New(logger common.Logger, storage Storage, config config.CacheConf) *App {
 		logger:           logger,
 		storage:          storage,
 		config:           config,
-		slotBannersCache: cache.NewCache[domain.SlotID, bannersCache](config.L1Capacity),
-		rotationsCache:   cache.NewCache[domain.GroupID, slotRotationsCache](config.L1Capacity),
+		slotBannersCache: cache.NewLRUCache[domain.SlotID, bannersCache](config.L1Capacity),
+		rotationsCache:   cache.NewLRUCache[domain.GroupID, slotRotationsCache](config.L1Capacity),
 	}
 }
 
@@ -93,25 +88,3 @@ var (
 	errNoBannersAssignedForSlot = errors.New("no banners assigned for slot")
 	errBannerNoAllowedForSlot   = errors.New("banner not allowed for slot")
 )
-
-func (s *statData) empty() bool {
-	return len(s.bannerStats) == 0
-}
-
-func (s *statData) recalculate() {
-	s.totalShowCount = 0
-	var logTotalShowCount float64
-	for _, data := range s.bannerStats {
-		s.totalShowCount += data.ShowCount
-	}
-	logTotalShowCount = 2 * math.Log(float64(s.totalShowCount))
-
-	var maxCoef float64
-	for _, data := range s.bannerStats {
-		coef := data.Ratio() + math.Sqrt(logTotalShowCount/float64(data.ShowCount))
-		if coef > maxCoef {
-			maxCoef = coef
-			s.bestBannerID = data.BannerID
-		}
-	}
-}

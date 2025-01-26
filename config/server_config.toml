@@ -13,3 +13,7 @@ port = 5432
 dbname = "rotator_db"
 user = "otus"
 password = "password"
+
+[cache]
+L1Capacity = 10
+L2Capacity = 10

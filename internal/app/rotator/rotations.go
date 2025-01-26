@@ -35,7 +35,7 @@ func (a *App) RegisterClick(
 		return err
 	}
 
-	bannerStat, ok := data.bannerStats[bannerID]
+	bannerStat, ok := data.bannerStats.Get(bannerID)
 
 	if ok {
 		bannerStat.ClickCount++
@@ -70,7 +70,7 @@ func (a *App) ShowBanner(
 		return bannerID, false, err
 	}
 	bannerID = data.bestBannerID
-	bannerStat, ok := data.bannerStats[bannerID]
+	bannerStat, ok := data.bannerStats.Get(bannerID)
 
 	if ok {
 		bannerStat.ShowCount++
@@ -88,7 +88,7 @@ func (a *App) loadStats(
 ) (statData, error) {
 	l2Cache, ok := a.rotationsCache.Get(groupID)
 	if !ok {
-		l2Cache = cache.NewCache[domain.SlotID, statData](a.config.L2Capacity)
+		l2Cache = cache.NewLRUCache[domain.SlotID, statData](a.config.L2Capacity)
 		a.rotationsCache.Set(groupID, l2Cache)
 	}
 
@@ -100,23 +100,23 @@ func (a *App) loadStats(
 			return statData{}, err
 		}
 
-		data.bannerStats = make(map[domain.BannerID]*domain.BannerStat)
+		data.bannerStats = cache.NewMapCache[domain.BannerID, domain.BannerStat](a.config.L2Capacity)
 
-		cachedSlotBannerIDs, err := a.listSlotBanners(ctx, slotID)
+		slotBanners, err := a.listSlotBanners(ctx, slotID)
 		if err != nil {
 			return statData{}, err
 		}
 
-		for bannerID := range cachedSlotBannerIDs {
-			data.bannerStats[bannerID] = &domain.BannerStat{
-				BannerID:   bannerID,
+		slotBanners.Range(func(key domain.BannerID, _ struct{}) {
+			data.bannerStats.Set(key, domain.BannerStat{
+				BannerID:   key,
 				ShowCount:  1,
 				ClickCount: 1,
-			}
-		}
+			})
+		})
 
 		for _, row := range bannerStats {
-			data.bannerStats[row.BannerID] = &row
+			data.bannerStats.Set(row.BannerID, row)
 		}
 		if !data.empty() {
 			data.recalculate()

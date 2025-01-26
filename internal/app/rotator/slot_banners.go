@@ -3,17 +3,11 @@ package rotatorapp
 import (
 	"context"
 
-	"github.com/pavel-nekrasov/banner_rotation_hw/internal/customerrors"
+	"github.com/pavel-nekrasov/banner_rotation_hw/internal/cache"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
 
 func (a *App) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
-	if slotID == "" {
-		return customerrors.ParamError{Param: "slotID", Err: errCannotBeEmpty}
-	}
-	if bannerID == "" {
-		return customerrors.ParamError{Param: "bannerID", Err: errCannotBeEmpty}
-	}
 	a.mutSlotBanners.Lock()
 	defer a.mutSlotBanners.Unlock()
 
@@ -24,18 +18,12 @@ func (a *App) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerI
 
 	bannersCache, ok := a.slotBannersCache.Get(slotID)
 	if ok {
-		bannersCache[bannerID] = struct{}{}
+		bannersCache.Set(bannerID, struct{}{})
 	}
 	return nil
 }
 
 func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
-	if slotID == "" {
-		return customerrors.ParamError{Param: "slotID", Err: errCannotBeEmpty}
-	}
-	if bannerID == "" {
-		return customerrors.ParamError{Param: "bannerID", Err: errCannotBeEmpty}
-	}
 	a.mutSlotBanners.Lock()
 	defer a.mutSlotBanners.Unlock()
 
@@ -45,22 +33,22 @@ func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, ba
 	}
 	bannersCache, ok := a.slotBannersCache.Get(slotID)
 	if ok {
-		delete(bannersCache, bannerID)
+		bannersCache.Remove(bannerID)
 	}
 
 	a.rotationsCache.Range(func(_ domain.GroupID, data slotRotationsCache) {
 		stats, ok := data.Get(slotID)
 		if ok {
-			delete(stats.bannerStats, bannerID)
+			stats.bannerStats.Remove(bannerID)
 			stats.recalculate()
 		}
 	})
 	return nil
 }
 
-func (a *App) listSlotBanners(ctx context.Context, slotID domain.SlotID) (map[domain.BannerID]struct{}, error) {
-	a.mutSlotBanners.Lock()
-	defer a.mutSlotBanners.Unlock()
+func (a *App) listSlotBanners(ctx context.Context, slotID domain.SlotID) (bannersCache, error) {
+	a.mutSlotBanners.RLock()
+	defer a.mutSlotBanners.RUnlock()
 
 	bannersCache, ok := a.slotBannersCache.Get(slotID)
 	if !ok {
@@ -68,9 +56,9 @@ func (a *App) listSlotBanners(ctx context.Context, slotID domain.SlotID) (map[do
 		if err != nil {
 			return nil, err
 		}
-		bannersCache = make(map[domain.BannerID]struct{})
+		bannersCache = cache.NewMapCache[domain.BannerID, struct{}](a.config.L2Capacity)
 		for _, b := range banners {
-			bannersCache[b.ID] = struct{}{}
+			bannersCache.Set(b.ID, struct{}{})
 		}
 		a.slotBannersCache.Set(slotID, bannersCache)
 	}
@@ -80,12 +68,10 @@ func (a *App) listSlotBanners(ctx context.Context, slotID domain.SlotID) (map[do
 func (a *App) checkSlotBanner(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) (bool, error) {
 	bannersCache, err := a.listSlotBanners(ctx, slotID)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
-	a.mutSlotBanners.Lock()
-	defer a.mutSlotBanners.Unlock()
 
-	_, ok := bannersCache[bannerID]
+	_, ok := bannersCache.Get(bannerID)
 	if ok {
 		return true, nil
 	}

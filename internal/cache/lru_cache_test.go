@@ -1,7 +1,8 @@
 package cache
 
 import (
-	"math/rand/v2"
+	"crypto/rand"
+	"math/big"
 	"strconv"
 	"sync"
 	"testing"
@@ -9,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCache(t *testing.T) {
+func TestLRUCache(t *testing.T) {
 	t.Run("empty cache", func(t *testing.T) {
-		c := NewCache[string, int](10)
+		c := NewLRUCache[string, int](10)
 
 		_, ok := c.Get("aaa")
 		require.False(t, ok)
@@ -20,8 +21,8 @@ func TestCache(t *testing.T) {
 		require.False(t, ok)
 	})
 
-	t.Run("simple", func(t *testing.T) {
-		c := NewCache[string, int](5)
+	t.Run("simple", func(t *testing.T) { //nolint:dupl
+		c := NewLRUCache[string, int](5)
 
 		wasInCache := c.Set("aaa", 100)
 		require.False(t, wasInCache)
@@ -50,7 +51,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		c := NewCache[string, int](5)
+		c := NewLRUCache[string, int](5)
 
 		c.Set("aaa", 100)
 		c.Set("bbb", 200)
@@ -72,7 +73,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("auto trim logic", func(t *testing.T) {
-		c := NewCache[string, int](3)
+		c := NewLRUCache[string, int](3)
 
 		c.Set("aaa", 100)
 		c.Set("bbb", 200)
@@ -98,7 +99,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("trim most rarely used logic", func(t *testing.T) {
-		c := NewCache[string, int](3)
+		c := NewLRUCache[string, int](3)
 
 		c.Set("aaa", 100)
 		c.Set("bbb", 200)
@@ -132,7 +133,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("value rewrite logic", func(t *testing.T) {
-		c := NewCache[string, int](2)
+		c := NewLRUCache[string, int](2)
 
 		c.Set("aaa", 100)
 		c.Set("bbb", 200)
@@ -154,8 +155,8 @@ func TestCache(t *testing.T) {
 	})
 }
 
-func TestCacheMultithreading(_ *testing.T) {
-	c := NewCache[string, int](10)
+func TestLRUCacheMultithreading(t *testing.T) {
+	c := NewLRUCache[string, int](10)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
@@ -168,8 +169,10 @@ func TestCacheMultithreading(_ *testing.T) {
 
 	go func() {
 		defer wg.Done()
+		n, err := rand.Int(rand.Reader, big.NewInt(1000))
+		require.NoError(t, err)
 		for i := 0; i < 1_000_000; i++ {
-			c.Get(strconv.Itoa(rand.IntN(1_000_000)))
+			c.Get(strconv.Itoa(int(n.Int64())))
 		}
 	}()
 

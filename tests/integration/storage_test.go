@@ -44,7 +44,7 @@ func (s *StorageIntegrationSuite) TearDownTest() {
 	s.storage.DB.ExecContext(context.Background(), "TRUNCATE slots CASCADE")
 }
 
-func (s *StorageIntegrationSuite) TestBannerCrud() {
+func (s *StorageIntegrationSuite) TestBannerCrud() { //nolint:dupl
 	itemID := domain.BannerID("banner1")
 	item := domain.Banner{
 		ID:          itemID,
@@ -74,7 +74,7 @@ func (s *StorageIntegrationSuite) TestBannerCrud() {
 	s.Require().Error(err)
 }
 
-func (s *StorageIntegrationSuite) TestGroupCrud() {
+func (s *StorageIntegrationSuite) TestGroupCrud() { //nolint:dupl
 	itemID := domain.GroupID("group1")
 	item := domain.Group{
 		ID:          itemID,
@@ -104,7 +104,7 @@ func (s *StorageIntegrationSuite) TestGroupCrud() {
 	s.Require().Error(err)
 }
 
-func (s *StorageIntegrationSuite) TestSlotCrud() {
+func (s *StorageIntegrationSuite) TestSlotCrud() { //nolint:dupl
 	itemID := domain.SlotID("slot1")
 	item := domain.Slot{
 		ID:          itemID,
