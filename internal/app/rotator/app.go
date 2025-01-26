@@ -3,6 +3,7 @@ package rotatorapp
 import (
 	"context"
 	"errors"
+	"math"
 	"sync"
 
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/cache"
@@ -12,12 +13,14 @@ import (
 )
 
 type (
-	BannerCache cache.LruCache[domain.BannerID, domain.Banner]
-	StatData    struct {
-		rotations map[domain.BannerID]domain.Rotation
+	bannersCache map[domain.BannerID]struct{}
+	statData     struct {
+		totalShowCount int64
+		bestBannerID   domain.BannerID
+		bannerStats    map[domain.BannerID]*domain.BannerStat
 	}
-	SlotRotationsCache cache.LruCache[domain.SlotID, StatData]
-	RotationsCache     cache.LruCache[domain.GroupID, SlotRotationsCache]
+	slotRotationsCache cache.LruCache[domain.SlotID, statData]
+	rotationsCache     cache.LruCache[domain.GroupID, slotRotationsCache]
 )
 
 type App struct {
@@ -25,9 +28,9 @@ type App struct {
 	storage          Storage
 	config           config.CacheConf
 	mutSlotBanners   sync.Mutex
-	slotBannersCache cache.LruCache[domain.SlotID, BannerCache]
-	mutRotations     sync.Mutex
-	rotationsCache   RotationsCache
+	slotBannersCache cache.LruCache[domain.SlotID, bannersCache]
+	mut              sync.Mutex
+	rotationsCache   rotationsCache
 }
 
 type Storage interface {
@@ -52,11 +55,27 @@ type Storage interface {
 	AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error
 	RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error
 	GetSlotBanner(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) (domain.Banner, error)
+	ListSlotBanners(ctx context.Context, slotID domain.SlotID) ([]domain.Banner, error)
 
-	ListRotations(ctx context.Context, groupID domain.GroupID, slotID domain.SlotID) ([]domain.Rotation, error)
-	IncrementRotationClick(ctx context.Context, groupID domain.GroupID, slotID domain.SlotID, bannerID domain.BannerID) error
-	IncrementRotationShow(ctx context.Context, groupID domain.GroupID, slotID domain.SlotID, bannerID domain.BannerID) error
-	GetRotation(ctx context.Context, groupID domain.GroupID, slotID domain.SlotID, bannerID domain.BannerID) (domain.Rotation, error)
+	ListBannerStats(ctx context.Context, groupID domain.GroupID, slotID domain.SlotID) ([]domain.BannerStat, error)
+	IncrementRotationClick(
+		ctx context.Context,
+		groupID domain.GroupID,
+		slotID domain.SlotID,
+		bannerID domain.BannerID,
+	) error
+	IncrementRotationShow(
+		ctx context.Context,
+		groupID domain.GroupID,
+		slotID domain.SlotID,
+		bannerID domain.BannerID,
+	) error
+	GetBannerStat(
+		ctx context.Context,
+		groupID domain.GroupID,
+		slotID domain.SlotID,
+		bannerID domain.BannerID,
+	) (domain.BannerStat, error)
 }
 
 func New(logger common.Logger, storage Storage, config config.CacheConf) *App {
@@ -64,11 +83,35 @@ func New(logger common.Logger, storage Storage, config config.CacheConf) *App {
 		logger:           logger,
 		storage:          storage,
 		config:           config,
-		slotBannersCache: cache.NewCache[domain.SlotID, BannerCache](config.L1Capacity),
-		rotationsCache:   cache.NewCache[domain.GroupID, SlotRotationsCache](config.L1Capacity),
+		slotBannersCache: cache.NewCache[domain.SlotID, bannersCache](config.L1Capacity),
+		rotationsCache:   cache.NewCache[domain.GroupID, slotRotationsCache](config.L1Capacity),
 	}
 }
 
 var (
-	errCannotBeEmpty = errors.New("cannot be empty")
+	errCannotBeEmpty            = errors.New("cannot be empty")
+	errNoBannersAssignedForSlot = errors.New("no banners assigned for slot")
+	errBannerNoAllowedForSlot   = errors.New("banner not allowed for slot")
 )
+
+func (s *statData) empty() bool {
+	return len(s.bannerStats) == 0
+}
+
+func (s *statData) recalculate() {
+	s.totalShowCount = 0
+	var logTotalShowCount float64
+	for _, data := range s.bannerStats {
+		s.totalShowCount += data.ShowCount
+	}
+	logTotalShowCount = 2 * math.Log(float64(s.totalShowCount))
+
+	var maxCoef float64
+	for _, data := range s.bannerStats {
+		coef := data.Ratio() + math.Sqrt(logTotalShowCount/float64(data.ShowCount))
+		if coef > maxCoef {
+			maxCoef = coef
+			s.bestBannerID = data.BannerID
+		}
+	}
+}

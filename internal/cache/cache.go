@@ -6,6 +6,7 @@ type LruCache[K comparable, D interface{}] interface {
 	Set(key K, value D) bool
 	Get(key K) (D, bool)
 	Remove(key K)
+	Range(handler func(key K, data D))
 	Clear()
 }
 
@@ -68,6 +69,15 @@ func (c *lruCache[K, D]) Remove(key K) {
 
 	if item, ok := c.items[key]; ok {
 		c.removeItem(item)
+	}
+}
+
+func (c *lruCache[K, D]) Range(handler func(key K, data D)) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for key, listItem := range c.items {
+		handler(key, listItem.Value.Data)
 	}
 }
 

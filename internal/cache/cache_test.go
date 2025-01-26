@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 	"sync"
 	"testing"
@@ -169,7 +169,7 @@ func TestCacheMultithreading(_ *testing.T) {
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 1_000_000; i++ {
-			c.Get(strconv.Itoa(rand.Intn(1_000_000)))
+			c.Get(strconv.Itoa(rand.IntN(1_000_000)))
 		}
 	}()
 

@@ -201,34 +201,39 @@ func (s *StorageIntegrationSuite) TestRotations() {
 	err = s.storage.CreateGroup(context.Background(), group)
 	s.Require().NoError(err)
 
-	err = s.storage.IncrementRotationClick(context.Background(), groupID, slotID, bannerID)
+	err = s.storage.AddBannerToSlot(context.Background(), slotID, bannerID)
+	s.Require().NoError(err)
+	err = s.storage.AddBannerToSlot(context.Background(), slotID, banner2ID)
 	s.Require().NoError(err)
 
-	err = s.storage.IncrementRotationShow(context.Background(), groupID, slotID, banner2ID)
+	err = s.storage.IncrementBannerStatClick(context.Background(), groupID, slotID, bannerID)
 	s.Require().NoError(err)
 
-	rotations, err := s.storage.ListRotations(context.Background(), groupID, slotID)
+	err = s.storage.IncrementBannerStatShow(context.Background(), groupID, slotID, banner2ID)
+	s.Require().NoError(err)
+
+	rotations, err := s.storage.ListBannerStats(context.Background(), groupID, slotID)
 	s.Require().NoError(err)
 	s.Require().Equal(2, len(rotations))
 
-	rotation, err := s.storage.GetRotation(context.Background(), groupID, slotID, bannerID)
+	rotation, err := s.storage.GetBannerStat(context.Background(), groupID, slotID, bannerID)
 	s.Require().NoError(err)
 	s.Require().Equal(bannerID, rotation.BannerID)
 	s.Require().Equal(int64(2), rotation.ClickCount)
 	s.Require().Equal(int64(1), rotation.ShowCount)
 
-	rotation, err = s.storage.GetRotation(context.Background(), groupID, slotID, banner2ID)
+	rotation, err = s.storage.GetBannerStat(context.Background(), groupID, slotID, banner2ID)
 	s.Require().NoError(err)
 	s.Require().Equal(banner2ID, rotation.BannerID)
 	s.Require().Equal(int64(1), rotation.ClickCount)
 	s.Require().Equal(int64(2), rotation.ShowCount)
 
-	err = s.storage.IncrementRotationClick(context.Background(), groupID, slotID, bannerID)
+	err = s.storage.IncrementBannerStatClick(context.Background(), groupID, slotID, bannerID)
 	s.Require().NoError(err)
-	err = s.storage.IncrementRotationShow(context.Background(), groupID, slotID, bannerID)
+	err = s.storage.IncrementBannerStatShow(context.Background(), groupID, slotID, bannerID)
 	s.Require().NoError(err)
 
-	rotation, err = s.storage.GetRotation(context.Background(), groupID, slotID, bannerID)
+	rotation, err = s.storage.GetBannerStat(context.Background(), groupID, slotID, bannerID)
 	s.Require().NoError(err)
 	s.Require().Equal(bannerID, rotation.BannerID)
 	s.Require().Equal(int64(3), rotation.ClickCount)

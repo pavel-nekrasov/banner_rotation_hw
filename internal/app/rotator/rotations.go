@@ -13,78 +13,116 @@ func (a *App) RegisterClick(
 	slotID domain.SlotID,
 	bannerID domain.BannerID,
 ) error {
-	ok, err := a.CheckSlotBanner(ctx, slotID, bannerID)
+	ok, err := a.checkSlotBanner(ctx, slotID, bannerID)
 	if err != nil {
 		return err
 	}
 
 	if !ok {
-		return nil
+		return errBannerNoAllowedForSlot
 	}
-	a.mutRotations.Lock()
-	defer a.mutRotations.Unlock()
 
-	statData, err := a.loadStatData(ctx, groupID, slotID)
+	a.mut.Lock()
+	defer a.mut.Unlock()
+
+	data, err := a.loadStats(ctx, groupID, slotID)
 	if err != nil {
 		return err
 	}
+
 	err = a.storage.IncrementRotationClick(ctx, groupID, slotID, bannerID)
 	if err != nil {
 		return err
 	}
-	rotation, err := a.storage.GetRotation(ctx, groupID, slotID, bannerID)
-	if err != nil {
-		return err
-	}
-	statData.rotations[rotation.BannerID] = rotation
 
-	// TODO: add queue publish
+	bannerStat, ok := data.bannerStats[bannerID]
+
+	if ok {
+		bannerStat.ClickCount++
+		data.recalculate()
+		// TODO: add queue publish
+	}
 
 	return nil
 }
 
-func (a *App) SelectBanner(
+func (a *App) ShowBanner(
 	ctx context.Context,
 	groupID domain.GroupID,
 	slotID domain.SlotID,
-) (domain.Banner, bool, error) {
-	a.mutRotations.Lock()
-	defer a.mutRotations.Unlock()
+) (domain.BannerID, bool, error) {
+	a.mut.Lock()
+	defer a.mut.Unlock()
 
-	statData, err := a.loadStatData(ctx, groupID, slotID)
+	var bannerID domain.BannerID
+
+	data, err := a.loadStats(ctx, groupID, slotID)
 	if err != nil {
-		return domain.Banner{}, false, err
+		return bannerID, false, err
 	}
 
-	// implement calc logic
+	if data.empty() {
+		return bannerID, false, errNoBannersAssignedForSlot
+	}
 
-	// TODO: add queue publish
-	return domain.Banner{}, false, nil
+	err = a.storage.IncrementRotationShow(ctx, groupID, slotID, data.bestBannerID)
+	if err != nil {
+		return bannerID, false, err
+	}
+	bannerID = data.bestBannerID
+	bannerStat, ok := data.bannerStats[bannerID]
+
+	if ok {
+		bannerStat.ShowCount++
+		data.recalculate()
+		// TODO: add queue publish
+	}
+
+	return bannerID, false, nil
 }
 
-func (a *App) loadStatData(
+func (a *App) loadStats(
 	ctx context.Context,
 	groupID domain.GroupID,
 	slotID domain.SlotID,
-) (StatData, error) {
+) (statData, error) {
 	l2Cache, ok := a.rotationsCache.Get(groupID)
 	if !ok {
-		l2Cache = cache.NewCache[domain.SlotID, StatData](a.config.L2Capacity)
+		l2Cache = cache.NewCache[domain.SlotID, statData](a.config.L2Capacity)
 		a.rotationsCache.Set(groupID, l2Cache)
 	}
 
-	statData, ok := l2Cache.Get(slotID)
+	data, ok := l2Cache.Get(slotID)
 
 	if !ok {
-		rotations, err := a.storage.ListRotations(ctx, groupID, slotID)
+		bannerStats, err := a.storage.ListBannerStats(ctx, groupID, slotID)
 		if err != nil {
-			return statData, err
+			return statData{}, err
 		}
-		statData.rotations = map[domain.BannerID]domain.Rotation{}
-		for _, r := range rotations {
-			statData.rotations[r.BannerID] = r
+
+		data.bannerStats = make(map[domain.BannerID]*domain.BannerStat)
+
+		cachedSlotBannerIDs, err := a.listSlotBanners(ctx, slotID)
+		if err != nil {
+			return statData{}, err
 		}
-		l2Cache.Set(slotID, statData)
+
+		for bannerID := range cachedSlotBannerIDs {
+			data.bannerStats[bannerID] = &domain.BannerStat{
+				BannerID:   bannerID,
+				ShowCount:  1,
+				ClickCount: 1,
+			}
+		}
+
+		for _, row := range bannerStats {
+			data.bannerStats[row.BannerID] = &row
+		}
+		if !data.empty() {
+			data.recalculate()
+		}
+
+		l2Cache.Set(slotID, data)
 	}
-	return statData, nil
+	return data, nil
 }

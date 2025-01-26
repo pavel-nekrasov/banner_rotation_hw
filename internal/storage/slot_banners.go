@@ -55,7 +55,11 @@ func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID
 	return nil
 }
 
-func (s *Storage) GetSlotBanner(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) (domain.Banner, error) {
+func (s *Storage) GetSlotBanner(
+	ctx context.Context,
+	slotID domain.SlotID,
+	bannerID domain.BannerID,
+) (domain.Banner, error) {
 	row := s.DB.QueryRowContext(ctx,
 		`SELECT b.id, b.description 
 		FROM banners b 
