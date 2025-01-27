@@ -1,7 +1,7 @@
 # Собираем в гошке
 FROM golang:1.23 as build
 
-ENV BIN_FILE /opt/banner_rotator/server
+ENV BIN_FILE /opt/banner_rotator/rotator_server
 ENV CODE_DIR /go/src/
 
 WORKDIR ${CODE_DIR}
