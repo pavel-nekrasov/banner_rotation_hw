@@ -24,6 +24,18 @@ const (
 	Banners_ClickBanner_FullMethodName          = "/Banners/ClickBanner"
 	Banners_AddBannerToSlot_FullMethodName      = "/Banners/AddBannerToSlot"
 	Banners_RemoveBannerFromSlot_FullMethodName = "/Banners/RemoveBannerFromSlot"
+	Banners_CreateBanner_FullMethodName         = "/Banners/CreateBanner"
+	Banners_UpdateBanner_FullMethodName         = "/Banners/UpdateBanner"
+	Banners_GetBanner_FullMethodName            = "/Banners/GetBanner"
+	Banners_DeleteBanner_FullMethodName         = "/Banners/DeleteBanner"
+	Banners_CreateGroup_FullMethodName          = "/Banners/CreateGroup"
+	Banners_UpdateGroup_FullMethodName          = "/Banners/UpdateGroup"
+	Banners_GetGroup_FullMethodName             = "/Banners/GetGroup"
+	Banners_DeleteGroup_FullMethodName          = "/Banners/DeleteGroup"
+	Banners_CreateSlot_FullMethodName           = "/Banners/CreateSlot"
+	Banners_UpdateSlot_FullMethodName           = "/Banners/UpdateSlot"
+	Banners_GetSlot_FullMethodName              = "/Banners/GetSlot"
+	Banners_DeleteSlot_FullMethodName           = "/Banners/DeleteSlot"
 )
 
 // BannersClient is the client API for Banners service.
@@ -34,6 +46,18 @@ type BannersClient interface {
 	ClickBanner(ctx context.Context, in *ClickBannerRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	AddBannerToSlot(ctx context.Context, in *AddBannerToSlotRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemoveBannerFromSlot(ctx context.Context, in *RemoveBannerFromSlotRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	CreateBanner(ctx context.Context, in *BannerRequest, opts ...grpc.CallOption) (*SingleBannerResponse, error)
+	UpdateBanner(ctx context.Context, in *BannerRequest, opts ...grpc.CallOption) (*SingleBannerResponse, error)
+	GetBanner(ctx context.Context, in *BannerIdRequest, opts ...grpc.CallOption) (*SingleBannerResponse, error)
+	DeleteBanner(ctx context.Context, in *BannerIdRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	CreateGroup(ctx context.Context, in *GroupRequest, opts ...grpc.CallOption) (*SingleGroupResponse, error)
+	UpdateGroup(ctx context.Context, in *GroupRequest, opts ...grpc.CallOption) (*SingleGroupResponse, error)
+	GetGroup(ctx context.Context, in *GroupIdRequest, opts ...grpc.CallOption) (*SingleGroupResponse, error)
+	DeleteGroup(ctx context.Context, in *GroupIdRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	CreateSlot(ctx context.Context, in *SlotRequest, opts ...grpc.CallOption) (*SingleSlotResponse, error)
+	UpdateSlot(ctx context.Context, in *SlotRequest, opts ...grpc.CallOption) (*SingleSlotResponse, error)
+	GetSlot(ctx context.Context, in *SlotIdRequest, opts ...grpc.CallOption) (*SingleSlotResponse, error)
+	DeleteSlot(ctx context.Context, in *SlotIdRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type bannersClient struct {
@@ -84,6 +108,126 @@ func (c *bannersClient) RemoveBannerFromSlot(ctx context.Context, in *RemoveBann
 	return out, nil
 }
 
+func (c *bannersClient) CreateBanner(ctx context.Context, in *BannerRequest, opts ...grpc.CallOption) (*SingleBannerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleBannerResponse)
+	err := c.cc.Invoke(ctx, Banners_CreateBanner_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) UpdateBanner(ctx context.Context, in *BannerRequest, opts ...grpc.CallOption) (*SingleBannerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleBannerResponse)
+	err := c.cc.Invoke(ctx, Banners_UpdateBanner_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) GetBanner(ctx context.Context, in *BannerIdRequest, opts ...grpc.CallOption) (*SingleBannerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleBannerResponse)
+	err := c.cc.Invoke(ctx, Banners_GetBanner_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) DeleteBanner(ctx context.Context, in *BannerIdRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, Banners_DeleteBanner_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) CreateGroup(ctx context.Context, in *GroupRequest, opts ...grpc.CallOption) (*SingleGroupResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleGroupResponse)
+	err := c.cc.Invoke(ctx, Banners_CreateGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) UpdateGroup(ctx context.Context, in *GroupRequest, opts ...grpc.CallOption) (*SingleGroupResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleGroupResponse)
+	err := c.cc.Invoke(ctx, Banners_UpdateGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) GetGroup(ctx context.Context, in *GroupIdRequest, opts ...grpc.CallOption) (*SingleGroupResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleGroupResponse)
+	err := c.cc.Invoke(ctx, Banners_GetGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) DeleteGroup(ctx context.Context, in *GroupIdRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, Banners_DeleteGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) CreateSlot(ctx context.Context, in *SlotRequest, opts ...grpc.CallOption) (*SingleSlotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleSlotResponse)
+	err := c.cc.Invoke(ctx, Banners_CreateSlot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) UpdateSlot(ctx context.Context, in *SlotRequest, opts ...grpc.CallOption) (*SingleSlotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleSlotResponse)
+	err := c.cc.Invoke(ctx, Banners_UpdateSlot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) GetSlot(ctx context.Context, in *SlotIdRequest, opts ...grpc.CallOption) (*SingleSlotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleSlotResponse)
+	err := c.cc.Invoke(ctx, Banners_GetSlot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bannersClient) DeleteSlot(ctx context.Context, in *SlotIdRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, Banners_DeleteSlot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BannersServer is the server API for Banners service.
 // All implementations must embed UnimplementedBannersServer
 // for forward compatibility.
@@ -92,6 +236,18 @@ type BannersServer interface {
 	ClickBanner(context.Context, *ClickBannerRequest) (*empty.Empty, error)
 	AddBannerToSlot(context.Context, *AddBannerToSlotRequest) (*empty.Empty, error)
 	RemoveBannerFromSlot(context.Context, *RemoveBannerFromSlotRequest) (*empty.Empty, error)
+	CreateBanner(context.Context, *BannerRequest) (*SingleBannerResponse, error)
+	UpdateBanner(context.Context, *BannerRequest) (*SingleBannerResponse, error)
+	GetBanner(context.Context, *BannerIdRequest) (*SingleBannerResponse, error)
+	DeleteBanner(context.Context, *BannerIdRequest) (*empty.Empty, error)
+	CreateGroup(context.Context, *GroupRequest) (*SingleGroupResponse, error)
+	UpdateGroup(context.Context, *GroupRequest) (*SingleGroupResponse, error)
+	GetGroup(context.Context, *GroupIdRequest) (*SingleGroupResponse, error)
+	DeleteGroup(context.Context, *GroupIdRequest) (*empty.Empty, error)
+	CreateSlot(context.Context, *SlotRequest) (*SingleSlotResponse, error)
+	UpdateSlot(context.Context, *SlotRequest) (*SingleSlotResponse, error)
+	GetSlot(context.Context, *SlotIdRequest) (*SingleSlotResponse, error)
+	DeleteSlot(context.Context, *SlotIdRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedBannersServer()
 }
 
@@ -113,6 +269,42 @@ func (UnimplementedBannersServer) AddBannerToSlot(context.Context, *AddBannerToS
 }
 func (UnimplementedBannersServer) RemoveBannerFromSlot(context.Context, *RemoveBannerFromSlotRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveBannerFromSlot not implemented")
+}
+func (UnimplementedBannersServer) CreateBanner(context.Context, *BannerRequest) (*SingleBannerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateBanner not implemented")
+}
+func (UnimplementedBannersServer) UpdateBanner(context.Context, *BannerRequest) (*SingleBannerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBanner not implemented")
+}
+func (UnimplementedBannersServer) GetBanner(context.Context, *BannerIdRequest) (*SingleBannerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBanner not implemented")
+}
+func (UnimplementedBannersServer) DeleteBanner(context.Context, *BannerIdRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteBanner not implemented")
+}
+func (UnimplementedBannersServer) CreateGroup(context.Context, *GroupRequest) (*SingleGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateGroup not implemented")
+}
+func (UnimplementedBannersServer) UpdateGroup(context.Context, *GroupRequest) (*SingleGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateGroup not implemented")
+}
+func (UnimplementedBannersServer) GetGroup(context.Context, *GroupIdRequest) (*SingleGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGroup not implemented")
+}
+func (UnimplementedBannersServer) DeleteGroup(context.Context, *GroupIdRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteGroup not implemented")
+}
+func (UnimplementedBannersServer) CreateSlot(context.Context, *SlotRequest) (*SingleSlotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSlot not implemented")
+}
+func (UnimplementedBannersServer) UpdateSlot(context.Context, *SlotRequest) (*SingleSlotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSlot not implemented")
+}
+func (UnimplementedBannersServer) GetSlot(context.Context, *SlotIdRequest) (*SingleSlotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSlot not implemented")
+}
+func (UnimplementedBannersServer) DeleteSlot(context.Context, *SlotIdRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteSlot not implemented")
 }
 func (UnimplementedBannersServer) mustEmbedUnimplementedBannersServer() {}
 func (UnimplementedBannersServer) testEmbeddedByValue()                 {}
@@ -207,6 +399,222 @@ func _Banners_RemoveBannerFromSlot_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Banners_CreateBanner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BannerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).CreateBanner(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_CreateBanner_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).CreateBanner(ctx, req.(*BannerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_UpdateBanner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BannerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).UpdateBanner(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_UpdateBanner_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).UpdateBanner(ctx, req.(*BannerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_GetBanner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BannerIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).GetBanner(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_GetBanner_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).GetBanner(ctx, req.(*BannerIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_DeleteBanner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BannerIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).DeleteBanner(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_DeleteBanner_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).DeleteBanner(ctx, req.(*BannerIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_CreateGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).CreateGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_CreateGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).CreateGroup(ctx, req.(*GroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_UpdateGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).UpdateGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_UpdateGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).UpdateGroup(ctx, req.(*GroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_GetGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).GetGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_GetGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).GetGroup(ctx, req.(*GroupIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_DeleteGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).DeleteGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_DeleteGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).DeleteGroup(ctx, req.(*GroupIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_CreateSlot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SlotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).CreateSlot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_CreateSlot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).CreateSlot(ctx, req.(*SlotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_UpdateSlot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SlotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).UpdateSlot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_UpdateSlot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).UpdateSlot(ctx, req.(*SlotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_GetSlot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SlotIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).GetSlot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_GetSlot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).GetSlot(ctx, req.(*SlotIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Banners_DeleteSlot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SlotIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BannersServer).DeleteSlot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Banners_DeleteSlot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BannersServer).DeleteSlot(ctx, req.(*SlotIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Banners_ServiceDesc is the grpc.ServiceDesc for Banners service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -229,6 +637,54 @@ var Banners_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveBannerFromSlot",
 			Handler:    _Banners_RemoveBannerFromSlot_Handler,
+		},
+		{
+			MethodName: "CreateBanner",
+			Handler:    _Banners_CreateBanner_Handler,
+		},
+		{
+			MethodName: "UpdateBanner",
+			Handler:    _Banners_UpdateBanner_Handler,
+		},
+		{
+			MethodName: "GetBanner",
+			Handler:    _Banners_GetBanner_Handler,
+		},
+		{
+			MethodName: "DeleteBanner",
+			Handler:    _Banners_DeleteBanner_Handler,
+		},
+		{
+			MethodName: "CreateGroup",
+			Handler:    _Banners_CreateGroup_Handler,
+		},
+		{
+			MethodName: "UpdateGroup",
+			Handler:    _Banners_UpdateGroup_Handler,
+		},
+		{
+			MethodName: "GetGroup",
+			Handler:    _Banners_GetGroup_Handler,
+		},
+		{
+			MethodName: "DeleteGroup",
+			Handler:    _Banners_DeleteGroup_Handler,
+		},
+		{
+			MethodName: "CreateSlot",
+			Handler:    _Banners_CreateSlot_Handler,
+		},
+		{
+			MethodName: "UpdateSlot",
+			Handler:    _Banners_UpdateSlot_Handler,
+		},
+		{
+			MethodName: "GetSlot",
+			Handler:    _Banners_GetSlot_Handler,
+		},
+		{
+			MethodName: "DeleteSlot",
+			Handler:    _Banners_DeleteSlot_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
