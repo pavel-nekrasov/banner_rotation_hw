@@ -27,7 +27,7 @@ env-up:
 migrate:
 	docker compose -f deploy/docker-compose.yml up migrate
 
-start:
+run:
 	make env-build
 	make env-up
 	make migrate
