@@ -18,7 +18,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/banner_rotator/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "/etc/banner_rotator/server_config.toml", "Path to configuration file")
 }
 
 func main() {

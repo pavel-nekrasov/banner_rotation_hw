@@ -13,6 +13,8 @@ import (
 type Application interface {
 	ClickBanner(ctx context.Context, groupID domain.GroupID, slotID domain.SlotID, bannerID domain.BannerID) error
 	SelectBanner(ctx context.Context, groupID domain.GroupID, slotID domain.SlotID) (domain.BannerID, error)
+	AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error
+	RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error
 }
 
 type Logger interface {
@@ -73,10 +75,54 @@ func (s *BannerService) SelectBanner(
 		return nil, status.Error(codes.InvalidArgument, "slotID is not specified")
 	}
 
-	bannerID, err := s.app.SelectBanner(ctx, domain.GroupID(req.GroupID), domain.SlotID(req.SlotID))
+	bannerID, err := s.app.SelectBanner(ctx, domain.GroupID(groupID), domain.SlotID(slotID))
 	if err != nil {
 		return nil, err
 	}
 
 	return &pb.SelectBannerResponse{BannerID: string(bannerID)}, nil
+}
+
+func (s *BannerService) AddBannerToSlot(
+	ctx context.Context,
+	req *pb.AddBannerToSlotRequest,
+) (*empty.Empty, error) {
+	slotID := req.GetSlotID()
+	if slotID == "" {
+		return nil, status.Error(codes.InvalidArgument, "slotID is not specified")
+	}
+
+	bannerID := req.GetBannerID()
+	if bannerID == "" {
+		return nil, status.Error(codes.InvalidArgument, "bannerID is not specified")
+	}
+
+	err := s.app.AddBannerToSlot(ctx, domain.SlotID(slotID), domain.BannerID(bannerID))
+	if err != nil {
+		return nil, err
+	}
+
+	return &empty.Empty{}, nil
+}
+
+func (s *BannerService) RemoveBannerFromSlot(
+	ctx context.Context,
+	req *pb.RemoveBannerFromSlotRequest,
+) (*empty.Empty, error) {
+	slotID := req.GetSlotID()
+	if slotID == "" {
+		return nil, status.Error(codes.InvalidArgument, "slotID is not specified")
+	}
+
+	bannerID := req.GetBannerID()
+	if bannerID == "" {
+		return nil, status.Error(codes.InvalidArgument, "bannerID is not specified")
+	}
+
+	err := s.app.RemoveBannerFromSlot(ctx, domain.SlotID(slotID), domain.BannerID(bannerID))
+	if err != nil {
+		return nil, err
+	}
+
+	return &empty.Empty{}, nil
 }

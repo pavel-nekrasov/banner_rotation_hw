@@ -46,29 +46,6 @@ func (s *Server) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	/*
-		httpBindAddr := fmt.Sprintf("%v:%v", s.host, s.httpPort)
-		s.logger.Info(fmt.Sprintf("Starting HTTP on %v...", httpBindAddr))
-
-			gwClient, err := grpc.NewClient(grpcBindAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil {
-				return err
-			}
-
-			gwMux := runtime.NewServeMux()
-			err = pb.RegisterEventsHandler(ctx, gwMux, gwClient)
-			if err != nil {
-				return err
-			}
-
-			gwMuxWithLogging := httpmiddleware.NewLoggingMiddleware(s.logger, gwMux)
-			s.gwServer = &http.Server{Addr: httpBindAddr, Handler: gwMuxWithLogging, ReadTimeout: time.Second * 10}
-			go func() {
-				if err := s.gwServer.ListenAndServe(); err != http.ErrServerClosed {
-					panic(err)
-				}
-			}()
-	*/
 
 	s.server = grpc.NewServer()
 	pb.RegisterBannersServer(s.server, services.NewBannerService(s.logger, s.app))
