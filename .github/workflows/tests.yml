@@ -27,7 +27,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.62.2
-          working-directory: ${{ env.BRANCH }}
+          working-directory: ./
 
 
   tests_by_makefile:
