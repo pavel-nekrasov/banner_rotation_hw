@@ -35,7 +35,6 @@ type EndpointConf struct {
 }
 
 type StorageConf struct {
-	Mode     string
 	Host     string
 	Port     int
 	DBName   string

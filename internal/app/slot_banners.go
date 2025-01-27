@@ -3,6 +3,7 @@ package rotatorapp
 import (
 	"context"
 
+	appdomain "github.com/pavel-nekrasov/banner_rotation_hw/internal/app/domain"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/cache"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
@@ -60,12 +61,12 @@ func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, ba
 		bannersCache.Remove(bannerID)
 	}
 
-	a.rotationsCache.Range(func(_ domain.GroupID, data slotRotationsCache) {
-		stats, ok := data.Get(slotID)
-		if ok {
-			stats.Remove(bannerID)
+	a.rotationsCache.Range(func(key appdomain.GroupSlotKey, data *appdomain.StatData) {
+		if key.SlotID == slotID {
+			data.Remove(bannerID)
 		}
 	})
+
 	return nil
 }
 

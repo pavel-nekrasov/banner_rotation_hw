@@ -10,6 +10,7 @@ test-migrate:
 	docker compose -f deploy/docker-compose.test.yml up rotator_test_migrate
 
 integration-test:
+	make test-env-build
 	make test-env-up
 	make test-migrate
 	docker compose -f deploy/docker-compose.test.yml up rotator_test
@@ -27,6 +28,7 @@ migrate:
 	docker compose -f deploy/docker-compose.yml up migrate
 
 start:
+	make env-build
 	make env-up
 	make migrate
 	docker compose -f deploy/docker-compose.yml up -d rotator_server

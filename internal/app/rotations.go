@@ -4,7 +4,6 @@ import (
 	"context"
 
 	appdomain "github.com/pavel-nekrasov/banner_rotation_hw/internal/app/domain"
-	"github.com/pavel-nekrasov/banner_rotation_hw/internal/cache"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
 
@@ -40,10 +39,11 @@ func (a *App) ClickBanner(
 		return ErrBannerNoAllowedForSlot
 	}
 
-	// a.mut.Lock()
-	// defer a.mut.Unlock()
+	key := appdomain.GroupSlotKey{GroupID: groupID, SlotID: slotID}
+	a.rotationsCache.Lock(key)
+	defer a.rotationsCache.Unlock(key)
 
-	statData, err := a.getStats(ctx, groupID, slotID)
+	statData, err := a.getStats(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -77,10 +77,11 @@ func (a *App) SelectBanner(
 		return emptyBannerID, err
 	}
 
-	a.mut.Lock()
-	defer a.mut.Unlock()
+	key := appdomain.GroupSlotKey{GroupID: groupID, SlotID: slotID}
+	a.rotationsCache.Lock(key)
+	defer a.rotationsCache.Unlock(key)
 
-	statData, err := a.getStats(ctx, groupID, slotID)
+	statData, err := a.getStats(ctx, key)
 	if err != nil {
 		return emptyBannerID, err
 	}
@@ -99,28 +100,22 @@ func (a *App) SelectBanner(
 
 func (a *App) getStats(
 	ctx context.Context,
-	groupID domain.GroupID,
-	slotID domain.SlotID,
+	key appdomain.GroupSlotKey,
 ) (*appdomain.StatData, error) {
 	var statData *appdomain.StatData
 
-	l2Cache, ok := a.rotationsCache.Get(groupID)
-	if !ok {
-		l2Cache = cache.NewLRUCache[domain.SlotID, *appdomain.StatData](a.config.L2Capacity)
-		a.rotationsCache.Set(groupID, l2Cache)
-	}
+	statData, ok := a.rotationsCache.Get(key)
 
-	statData, ok = l2Cache.Get(slotID)
 	if ok {
 		return statData, nil
 	}
 
-	slotBanners, err := a.listSlotBanners(ctx, slotID)
+	slotBanners, err := a.listSlotBanners(ctx, key.SlotID)
 	if err != nil {
 		return nil, err
 	}
 
-	bannerStats, err := a.storage.ListBannerStats(ctx, groupID, slotID)
+	bannerStats, err := a.storage.ListBannerStats(ctx, key.GroupID, key.SlotID)
 	if err != nil {
 		return nil, err
 	}
@@ -142,6 +137,6 @@ func (a *App) getStats(
 		return nil, ErrNoBannersAssignedForSlot
 	}
 	statData.Recalculate()
-	l2Cache.Set(slotID, statData)
+	a.rotationsCache.Set(key, statData)
 	return statData, nil
 }

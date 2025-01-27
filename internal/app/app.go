@@ -15,9 +15,6 @@ import (
 
 type (
 	bannersCache cache.Cache[domain.BannerID, struct{}]
-
-	slotRotationsCache cache.Cache[domain.SlotID, *appdomain.StatData]
-	rotationsCache     cache.Cache[domain.GroupID, slotRotationsCache]
 )
 
 type App struct {
@@ -25,12 +22,11 @@ type App struct {
 	storage          Storage
 	config           config.CacheConf
 	mutSlotBanners   sync.RWMutex
+	bannersCache     cache.Cache[domain.BannerID, domain.Banner]
 	groupsCache      cache.Cache[domain.GroupID, domain.Group]
 	slotsCache       cache.Cache[domain.SlotID, domain.Slot]
-	bannersCache     cache.Cache[domain.BannerID, domain.Banner]
 	slotBannersCache cache.Cache[domain.SlotID, bannersCache]
-	mut              sync.RWMutex
-	rotationsCache   rotationsCache
+	rotationsCache   *appdomain.StatDataCache
 }
 
 type Storage interface {
@@ -87,7 +83,7 @@ func New(logger common.Logger, storage Storage, config config.CacheConf) *App {
 		slotsCache:       cache.NewLRUCache[domain.SlotID, domain.Slot](config.L1Capacity),
 		bannersCache:     cache.NewLRUCache[domain.BannerID, domain.Banner](config.L1Capacity),
 		slotBannersCache: cache.NewLRUCache[domain.SlotID, bannersCache](config.L1Capacity),
-		rotationsCache:   cache.NewLRUCache[domain.GroupID, slotRotationsCache](config.L1Capacity),
+		rotationsCache:   appdomain.NewStatDataCache(config.L1Capacity),
 	}
 }
 
@@ -97,15 +93,13 @@ var (
 	ErrBannerNoAllowedForSlot   = errors.New("banner not allowed for slot")
 )
 
-func (a *App) Debug() {
-	a.rotationsCache.Range(func(key domain.GroupID, data slotRotationsCache) {
-		fmt.Printf("\ngroup: %v\n", key)
-		data.Range(func(key domain.SlotID, data *appdomain.StatData) {
-			fmt.Printf("\tslot: %v\n", key)
-			fmt.Printf("\t\tLast best banner: %v\n", data.BestBanner())
-			data.Range(func(key domain.BannerID, data *domain.BannerStat) {
-				fmt.Printf("\t\t\tbanner: %v  shows: %v  clicks: %v\n", key, data.ShowCount, data.ClickCount)
-			})
+func (a *App) CacheDebugInfo() {
+	a.rotationsCache.Range(func(key appdomain.GroupSlotKey, data *appdomain.StatData) {
+		fmt.Printf("\ngroup: %v\n", key.GroupID)
+		fmt.Printf("\tslot: %v\n", key.SlotID)
+		fmt.Printf("\t\tLast best banner: %v\n", data.BestBanner())
+		data.Range(func(key domain.BannerID, data *domain.BannerStat) {
+			fmt.Printf("\t\t\tbanner: %v  shows: %v  clicks: %v\n", key, data.ShowCount, data.ClickCount)
 		})
 	})
 }
