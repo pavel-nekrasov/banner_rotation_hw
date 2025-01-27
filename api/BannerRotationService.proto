@@ -1,0 +1,43 @@
+syntax = "proto3";
+option go_package = "./;pb";
+
+import "google/protobuf/empty.proto";
+
+service Banners {
+  rpc ShowBanner (SelectBannerRequest) returns (SelectBannerResponse) {
+  }
+
+  rpc ClickBanner (ClickBannerRequest) returns (google.protobuf.Empty) {
+  }
+  
+  rpc AddBannerToSlot (AddBannerToSlotRequest) returns (google.protobuf.Empty) {
+  }
+
+  rpc RemoveBannerFromSlot (RemoveBannerFromSlotRequest) returns (google.protobuf.Empty) {
+  }
+}
+
+message SelectBannerRequest {
+  string groupID = 1;
+  string slotID = 2;
+}
+
+message SelectBannerResponse {
+  string bannerID = 1;
+}
+
+message ClickBannerRequest {
+  string groupID = 1;
+  string slotID = 2;
+  string bannerID = 3;
+}
+
+message AddBannerToSlotRequest {
+  string slotID = 1;
+  string bannerID = 2;
+}
+
+message RemoveBannerFromSlotRequest {
+  string slotID = 1;
+  string bannerID = 2;
+}

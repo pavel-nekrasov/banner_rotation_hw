@@ -6,7 +6,7 @@ type ListItem[T interface{}] struct {
 	Prev  *ListItem[T]
 }
 
-func (next *ListItem[T]) wire(prev *ListItem[T]) {
+func (next *ListItem[T]) wireToPrev(prev *ListItem[T]) {
 	if next != nil {
 		next.Prev = prev
 	}

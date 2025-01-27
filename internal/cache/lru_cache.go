@@ -8,7 +8,7 @@ type lruEntry[K comparable, D interface{}] struct {
 }
 
 type lruCache[K comparable, D interface{}] struct {
-	mu       sync.RWMutex
+	mut      sync.RWMutex
 	capacity int
 	queue    LinkedList[lruEntry[K, D]]
 	items    map[K]*ListItem[lruEntry[K, D]]
@@ -23,8 +23,8 @@ func NewLRUCache[K comparable, D interface{}](capacity int) Cache[K, D] {
 }
 
 func (c *lruCache[K, D]) Set(key K, value D) bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mut.Lock()
+	defer c.mut.Unlock()
 
 	data := lruEntry[K, D]{Key: key, Data: value}
 
@@ -43,8 +43,8 @@ func (c *lruCache[K, D]) Set(key K, value D) bool {
 }
 
 func (c *lruCache[K, D]) Get(key K) (D, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mut.Lock()
+	defer c.mut.Unlock()
 
 	if item, ok := c.items[key]; ok {
 		c.queue.MoveToFront(item)
@@ -56,15 +56,15 @@ func (c *lruCache[K, D]) Get(key K) (D, bool) {
 }
 
 func (c *lruCache[K, D]) Len() int {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mut.RLock()
+	defer c.mut.RUnlock()
 
 	return len(c.items)
 }
 
 func (c *lruCache[K, D]) Remove(key K) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mut.Lock()
+	defer c.mut.Unlock()
 
 	if item, ok := c.items[key]; ok {
 		c.removeItem(item)
@@ -72,8 +72,8 @@ func (c *lruCache[K, D]) Remove(key K) {
 }
 
 func (c *lruCache[K, D]) Range(handler func(key K, data D)) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mut.Lock()
+	defer c.mut.Unlock()
 
 	for key, listItem := range c.items {
 		handler(key, listItem.Value.Data)
@@ -81,8 +81,8 @@ func (c *lruCache[K, D]) Range(handler func(key K, data D)) {
 }
 
 func (c *lruCache[K, D]) Clear() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mut.Lock()
+	defer c.mut.Unlock()
 
 	c.queue = NewList[lruEntry[K, D]]()
 	c.items = make(map[K]*ListItem[lruEntry[K, D]], c.capacity)

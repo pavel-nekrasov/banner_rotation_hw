@@ -51,7 +51,7 @@ func (l *list[T]) PushFront(v T) *ListItem[T] {
 	i := &ListItem[T]{Value: v, Next: l.front}
 
 	if l.front != nil {
-		l.front.wire(i)
+		l.front.wireToPrev(i)
 	} else {
 		l.back = i
 	}
@@ -66,7 +66,7 @@ func (l *list[T]) PushBack(v T) *ListItem[T] {
 
 	i := &ListItem[T]{Value: v, Next: nil, Prev: l.back}
 	if l.back != nil {
-		i.wire(l.back)
+		i.wireToPrev(l.back)
 	} else {
 		l.front = i
 	}
@@ -85,7 +85,7 @@ func (l *list[T]) Remove(i *ListItem[T]) {
 
 	prevItem := i.Prev
 	nextItem := i.Next
-	nextItem.wire(prevItem)
+	nextItem.wireToPrev(prevItem)
 
 	if nextItem == nil {
 		l.back = prevItem
@@ -112,12 +112,12 @@ func (l *list[T]) MoveToFront(i *ListItem[T]) {
 		return
 	}
 
-	i.Next.wire(prevItem)
+	i.Next.wireToPrev(prevItem)
 	if i.Next == nil {
 		l.back = prevItem
 	}
 
-	l.front.wire(i)
+	l.front.wireToPrev(i)
 	l.front = i
 	i.Prev = nil
 }

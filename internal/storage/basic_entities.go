@@ -34,22 +34,19 @@ func (s *Storage) CreateSlot(ctx context.Context, entity domain.Slot) error {
 }
 
 func (s *Storage) GetSlot(ctx context.Context, entityID domain.SlotID) (domain.Slot, error) {
-	row := s.DB.QueryRowContext(ctx,
+	var entity domain.Slot
+	var description sql.NullString
+
+	err := s.DB.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM slots WHERE id = $1`,
 		entityID,
-	)
-	if errors.Is(row.Err(), sql.ErrNoRows) {
+	).Scan(&entity.ID,
+		&description)
+
+	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Slot{}, customerrors.NotFound{Message: fmt.Sprintf("Slot with id = \"%v\" not found", entityID)}
 	}
-	if row.Err() != nil {
-		return domain.Slot{}, row.Err()
-	}
-	var entity domain.Slot
-	var description sql.NullString
-	err := row.Scan(&entity.ID,
-		&description,
-	)
 	if err != nil {
 		return domain.Slot{}, err
 	}
@@ -160,22 +157,20 @@ func (s *Storage) CreateBanner(ctx context.Context, entity domain.Banner) error 
 }
 
 func (s *Storage) GetBanner(ctx context.Context, entityID domain.BannerID) (domain.Banner, error) {
-	row := s.DB.QueryRowContext(ctx,
+	var entity domain.Banner
+	var description sql.NullString
+
+	err := s.DB.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM banners WHERE id = $1`,
 		entityID,
-	)
-	if errors.Is(row.Err(), sql.ErrNoRows) {
-		return domain.Banner{}, customerrors.NotFound{Message: fmt.Sprintf("Banner with id = \"%v\" not found", entityID)}
-	}
-	if row.Err() != nil {
-		return domain.Banner{}, row.Err()
-	}
-	var entity domain.Banner
-	var description sql.NullString
-	err := row.Scan(&entity.ID,
+	).Scan(
+		&entity.ID,
 		&description,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Banner{}, customerrors.NotFound{Message: fmt.Sprintf("Banner with id = \"%v\" not found", entityID)}
+	}
 	if err != nil {
 		return domain.Banner{}, err
 	}
@@ -286,22 +281,20 @@ func (s *Storage) CreateGroup(ctx context.Context, entity domain.Group) error {
 }
 
 func (s *Storage) GetGroup(ctx context.Context, entityID domain.GroupID) (domain.Group, error) {
-	row := s.DB.QueryRowContext(ctx,
+	var entity domain.Group
+	var description sql.NullString
+
+	err := s.DB.QueryRowContext(ctx,
 		`SELECT id, description 
 		FROM groups WHERE id = $1`,
 		entityID,
-	)
-	if errors.Is(row.Err(), sql.ErrNoRows) {
-		return domain.Group{}, customerrors.NotFound{Message: fmt.Sprintf("Group with id = \"%v\" not found", entityID)}
-	}
-	if row.Err() != nil {
-		return domain.Group{}, row.Err()
-	}
-	var entity domain.Group
-	var description sql.NullString
-	err := row.Scan(&entity.ID,
+	).Scan(
+		&entity.ID,
 		&description,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Group{}, customerrors.NotFound{Message: fmt.Sprintf("Group with id = \"%v\" not found", entityID)}
+	}
 	if err != nil {
 		return domain.Group{}, err
 	}

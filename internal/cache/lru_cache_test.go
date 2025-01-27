@@ -21,7 +21,7 @@ func TestLRUCache(t *testing.T) {
 		require.False(t, ok)
 	})
 
-	t.Run("simple", func(t *testing.T) { //nolint:dupl
+	t.Run("simple", func(t *testing.T) {
 		c := NewLRUCache[string, int](5)
 
 		wasInCache := c.Set("aaa", 100)

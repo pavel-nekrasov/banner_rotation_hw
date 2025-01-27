@@ -12,7 +12,7 @@ import (
 
 func TestMapCache(t *testing.T) {
 	t.Run("empty cache", func(t *testing.T) {
-		c := NewMapCache[string, int](10)
+		c := NewMapCache[string, int]()
 
 		_, ok := c.Get("aaa")
 		require.False(t, ok)
@@ -21,8 +21,8 @@ func TestMapCache(t *testing.T) {
 		require.False(t, ok)
 	})
 
-	t.Run("simple", func(t *testing.T) { //nolint:dupl
-		c := NewMapCache[string, int](5)
+	t.Run("simple", func(t *testing.T) {
+		c := NewMapCache[string, int]()
 
 		wasInCache := c.Set("aaa", 100)
 		require.False(t, wasInCache)
@@ -51,7 +51,7 @@ func TestMapCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		c := NewMapCache[string, int](5)
+		c := NewMapCache[string, int]()
 
 		c.Set("aaa", 100)
 		c.Set("bbb", 200)
@@ -73,7 +73,7 @@ func TestMapCache(t *testing.T) {
 	})
 
 	t.Run("value rewrite logic", func(t *testing.T) {
-		c := NewMapCache[string, int](2)
+		c := NewMapCache[string, int]()
 
 		c.Set("aaa", 100)
 		c.Set("bbb", 200)
@@ -96,7 +96,7 @@ func TestMapCache(t *testing.T) {
 }
 
 func TestMapCacheMultithreading(t *testing.T) {
-	c := NewMapCache[string, int](10)
+	c := NewMapCache[string, int]()
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 

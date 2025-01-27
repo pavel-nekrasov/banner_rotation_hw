@@ -60,27 +60,25 @@ func (s *Storage) GetSlotBanner(
 	slotID domain.SlotID,
 	bannerID domain.BannerID,
 ) (domain.Banner, error) {
-	row := s.DB.QueryRowContext(ctx,
+	var entity domain.Banner
+	var description sql.NullString
+
+	err := s.DB.QueryRowContext(ctx,
 		`SELECT b.id, b.description 
 		FROM banners b 
 		INNER JOIN slot_banners sb ON sb.banner_id = b.id 
 		WHERE sb.slot_id = $1 AND sb.banner_id = $2`,
 		slotID,
 		bannerID,
+	).Scan(
+		&entity.ID,
+		&description,
 	)
-	if errors.Is(row.Err(), sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Banner{}, customerrors.NotFound{
 			Message: fmt.Sprintf("Slot id = \"%v\" does not containt banner id = %v", slotID, bannerID),
 		}
 	}
-	if row.Err() != nil {
-		return domain.Banner{}, row.Err()
-	}
-	var entity domain.Banner
-	var description sql.NullString
-	err := row.Scan(&entity.ID,
-		&description,
-	)
 	if err != nil {
 		return domain.Banner{}, err
 	}

@@ -8,10 +8,22 @@ import (
 )
 
 func (a *App) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
+	var err error
+
+	err = a.checkSlot(ctx, slotID)
+	if err != nil {
+		return err
+	}
+
+	err = a.checkBanner(ctx, bannerID)
+	if err != nil {
+		return err
+	}
+
 	a.mutSlotBanners.Lock()
 	defer a.mutSlotBanners.Unlock()
 
-	err := a.storage.AddBannerToSlot(ctx, slotID, bannerID)
+	err = a.storage.AddBannerToSlot(ctx, slotID, bannerID)
 	if err != nil {
 		return err
 	}
@@ -24,10 +36,22 @@ func (a *App) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerI
 }
 
 func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
+	var err error
+
+	err = a.checkSlot(ctx, slotID)
+	if err != nil {
+		return err
+	}
+
+	err = a.checkBanner(ctx, bannerID)
+	if err != nil {
+		return err
+	}
+
 	a.mutSlotBanners.Lock()
 	defer a.mutSlotBanners.Unlock()
 
-	err := a.storage.RemoveBannerFromSlot(ctx, slotID, bannerID)
+	err = a.storage.RemoveBannerFromSlot(ctx, slotID, bannerID)
 	if err != nil {
 		return err
 	}
@@ -39,24 +63,20 @@ func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, ba
 	a.rotationsCache.Range(func(_ domain.GroupID, data slotRotationsCache) {
 		stats, ok := data.Get(slotID)
 		if ok {
-			stats.bannerStats.Remove(bannerID)
-			stats.recalculate()
+			stats.Remove(bannerID)
 		}
 	})
 	return nil
 }
 
 func (a *App) listSlotBanners(ctx context.Context, slotID domain.SlotID) (bannersCache, error) {
-	a.mutSlotBanners.RLock()
-	defer a.mutSlotBanners.RUnlock()
-
 	bannersCache, ok := a.slotBannersCache.Get(slotID)
 	if !ok {
 		banners, err := a.storage.ListSlotBanners(ctx, slotID)
 		if err != nil {
 			return nil, err
 		}
-		bannersCache = cache.NewMapCache[domain.BannerID, struct{}](a.config.L2Capacity)
+		bannersCache = cache.NewMapCache[domain.BannerID, struct{}]()
 		for _, b := range banners {
 			bannersCache.Set(b.ID, struct{}{})
 		}
@@ -72,8 +92,5 @@ func (a *App) checkSlotBanner(ctx context.Context, slotID domain.SlotID, bannerI
 	}
 
 	_, ok := bannersCache.Get(bannerID)
-	if ok {
-		return true, nil
-	}
-	return true, nil
+	return ok, nil
 }

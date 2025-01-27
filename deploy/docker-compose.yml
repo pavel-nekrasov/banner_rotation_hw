@@ -1,23 +1,25 @@
 services:
 
-  rotator_test_migrate:
-    container_name: rotator_test_migrate
+  migrate:
+    container_name: rotator_migrate
     build:
       context: ../
       dockerfile: ./build/Dockerfile_migrate
-    image: rotator_test_migrate_img
+    image: rotator_migrate_img
     depends_on:
       rotator_db:
         condition: service_healthy
       rotator_mq:
         condition: service_started
   
-  rotator_test:
-    container_name: rotator_test
+  rotator_server:
+    container_name: rotator_server
     build:
       context: ../
-      dockerfile: ./build/Dockerfile_test
-    image: rotator_test_img
+      dockerfile: ./build/Dockerfile_server
+    image: rotator_server_img
+    ports:
+      - 15000:15000
     depends_on:
       rotator_db:
         condition: service_started
@@ -30,7 +32,7 @@ services:
     env_file:
       - ../.env.local
     volumes:
-      - rotator_pgdata_test:/var/lib/postgresql/data
+      - rotator_pgdata:/var/lib/postgresql/data
     ports:
       - 5432:5432
     restart: always
@@ -49,13 +51,13 @@ services:
       - "15672:15672"
       - "5672:5672"
     volumes:
-      - rotator_rabbitdata_test:/var/lib/rabbitmq
+      - rotator_rabbitdata:/var/lib/rabbitmq
     restart: always
 
 networks:
   default:
-    name: rotator-test-network
+    name: rotator-network
 
 volumes:
-  rotator_pgdata_test:
-  rotator_rabbitdata_test:
+  rotator_pgdata:
+  rotator_rabbitdata:

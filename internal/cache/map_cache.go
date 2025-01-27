@@ -3,15 +3,13 @@ package cache
 import "sync"
 
 type mapCache[K comparable, D interface{}] struct {
-	mu       sync.RWMutex
-	capacity int
-	items    map[K]D
+	mu    sync.RWMutex
+	items map[K]D
 }
 
-func NewMapCache[K comparable, D interface{}](capacity int) Cache[K, D] {
+func NewMapCache[K comparable, D interface{}]() Cache[K, D] {
 	return &mapCache[K, D]{
-		capacity: capacity,
-		items:    make(map[K]D, capacity),
+		items: make(map[K]D),
 	}
 }
 
@@ -30,7 +28,7 @@ func (c *mapCache[K, D]) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.items = make(map[K]D, c.capacity)
+	c.items = make(map[K]D)
 }
 
 func (c *mapCache[K, D]) Len() int {
