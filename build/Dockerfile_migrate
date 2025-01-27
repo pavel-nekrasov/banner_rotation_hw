@@ -27,7 +27,7 @@ LABEL ORGANIZATION="OTUS Online Education"
 LABEL SERVICE="Banner rotator"
 LABEL MAINTAINERS="sileaudivide@gmail.com"
 
-ENV BIN_FILE "/opt/banner_rotator/migrate"
+ENV BIN_FILE "/opt/banner_rotator/rotator_migrator"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
 
 ENV CONFIG_FILE /etc/banner_rotator/migrate_config.toml
