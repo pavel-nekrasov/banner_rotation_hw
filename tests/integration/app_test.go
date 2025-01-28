@@ -232,7 +232,8 @@ func (s *AppIntegrationSuite) TestSingleLogicCheck() {
 	s.Suite.Require().Equal(int64(numberOfShows), actualShows, "общее кол-во показов по всем баннерам")
 }
 
-// в тесте кликаем X раз случайно на разные баннеры в разных слотах
+// в тесте кликаем X раз случайно на разные баннеры в разных слотах, и показываем баннеры Y раз
+// причем клики и показы идут одновременно
 //
 //	проверка правильности работы в условиях конкурентности
 func (s *AppIntegrationSuite) TestMultiLogicCheck() {
