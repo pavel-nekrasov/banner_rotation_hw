@@ -80,7 +80,7 @@ func main() {
 	defer queueProducer.Close()
 
 	// grpc service
-	app := rotatorapp.New(log, storage, queueProducer, config.Cache)
+	app := rotatorapp.New(ctx, log, storage, queueProducer, config.Cache)
 	server := internalgrpc.NewServer(config.Endpoint.Host,
 		config.Endpoint.GRPCPort,
 		log,

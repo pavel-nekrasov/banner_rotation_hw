@@ -18,16 +18,17 @@ type (
 )
 
 type App struct {
-	config           config.CacheConf
-	logger           common.Logger
-	storage          Storage
-	publisher        Publisher
-	mut              sync.RWMutex
-	bannersCache     cache.Cache[domain.BannerID, domain.Banner]
-	groupsCache      cache.Cache[domain.GroupID, domain.Group]
-	slotsCache       cache.Cache[domain.SlotID, domain.Slot]
-	slotBannersCache cache.Cache[domain.SlotID, bannersCache]
-	rotationsCache   cache.Cache[appdomain.GroupSlotKey, *appdomain.StatData]
+	config                  config.CacheConf
+	logger                  common.Logger
+	storage                 Storage
+	publisher               Publisher
+	mut                     sync.RWMutex
+	keyMut                  *cache.MultiMutex[appdomain.GroupSlotKey]
+	bannersCache            cache.Cache[domain.BannerID, domain.Banner]
+	groupsCache             cache.Cache[domain.GroupID, domain.Group]
+	slotsCache              cache.Cache[domain.SlotID, domain.Slot]
+	allowedSlotBannersCache cache.Cache[domain.SlotID, bannersCache]
+	rotationsCache          cache.Cache[appdomain.GroupSlotKey, *appdomain.StatData]
 }
 
 type Storage interface {
@@ -79,17 +80,24 @@ type Publisher interface {
 	Publish(data []byte) error
 }
 
-func New(logger common.Logger, storage Storage, publisher Publisher, config config.CacheConf) *App {
+func New(
+	ctx context.Context,
+	logger common.Logger,
+	storage Storage,
+	publisher Publisher,
+	config config.CacheConf,
+) *App {
 	return &App{
-		logger:           logger,
-		storage:          storage,
-		publisher:        publisher,
-		config:           config,
-		groupsCache:      cache.NewLRUCache[domain.GroupID, domain.Group](config.L1Capacity),
-		slotsCache:       cache.NewLRUCache[domain.SlotID, domain.Slot](config.L1Capacity),
-		bannersCache:     cache.NewLRUCache[domain.BannerID, domain.Banner](config.L1Capacity),
-		slotBannersCache: cache.NewLRUCache[domain.SlotID, bannersCache](config.L1Capacity),
-		rotationsCache:   cache.NewLRUCache[appdomain.GroupSlotKey, *appdomain.StatData](config.L1Capacity),
+		logger:                  logger,
+		storage:                 storage,
+		publisher:               publisher,
+		config:                  config,
+		keyMut:                  cache.NewMultiMutex[appdomain.GroupSlotKey](ctx, logger),
+		groupsCache:             cache.NewLRUCache[domain.GroupID, domain.Group](config.L1Capacity),
+		slotsCache:              cache.NewLRUCache[domain.SlotID, domain.Slot](config.L1Capacity),
+		bannersCache:            cache.NewLRUCache[domain.BannerID, domain.Banner](config.L1Capacity),
+		allowedSlotBannersCache: cache.NewLRUCache[domain.SlotID, bannersCache](config.L1Capacity),
+		rotationsCache:          cache.NewLRUCache[appdomain.GroupSlotKey, *appdomain.StatData](config.L1Capacity),
 	}
 }
 

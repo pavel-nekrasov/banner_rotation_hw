@@ -2,14 +2,12 @@ package appdomain
 
 import (
 	"math"
-	"sync"
 
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/cache"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
 
 type StatData struct {
-	mut            sync.RWMutex
 	totalShowCount int64
 	bestBannerID   domain.BannerID
 	bannerStats    cache.Cache[domain.BannerID, *domain.BannerStat]
@@ -19,14 +17,6 @@ func NewStatData() *StatData {
 	return &StatData{
 		bannerStats: cache.NewMapCache[domain.BannerID, *domain.BannerStat](),
 	}
-}
-
-func (s *StatData) Lock() {
-	s.mut.Lock()
-}
-
-func (s *StatData) Unlock() {
-	s.mut.Unlock()
 }
 
 func (s *StatData) Empty() bool {

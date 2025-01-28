@@ -33,7 +33,7 @@ func (a *App) ClickBanner(
 		return err
 	}
 
-	ok, err := a.checkSlotBanner(ctx, slotID, bannerID)
+	ok, err := a.checkAllowedSlotBanner(ctx, slotID, bannerID)
 	if err != nil {
 		return err
 	}
@@ -43,14 +43,14 @@ func (a *App) ClickBanner(
 	}
 
 	key := appdomain.GroupSlotKey{GroupID: groupID, SlotID: slotID}
-	statData, err := a.getStats(ctx, key)
+	// лочимся на конкретном ключе, чтобы не мешать обработке событий с другим ключом (Group/Slot)
+	a.keyMut.Lock(key)
+	defer a.keyMut.Unlock(key)
+
+	statData, err := a.loadStatData(ctx, key)
 	if err != nil {
 		return err
 	}
-
-	// лочимся на конкретном бакете чтобы не мешать обработке событий с другим Group/Slot
-	statData.Lock()
-	defer statData.Unlock()
 
 	if statData.Empty() {
 		return ErrNoBannersAssignedForSlot
@@ -95,14 +95,14 @@ func (a *App) SelectBanner(
 	}
 
 	key := appdomain.GroupSlotKey{GroupID: groupID, SlotID: slotID}
-	statData, err := a.getStats(ctx, key)
+	// лочимся на конкретном ключе, чтобы не мешать обработке событий с другим ключом (Group/Slot)
+	a.keyMut.Lock(key)
+	defer a.keyMut.Unlock(key)
+
+	statData, err := a.loadStatData(ctx, key)
 	if err != nil {
 		return emptyBannerID, err
 	}
-
-	// лочимся на конкретном бакете чтобы не мешать обработке событий с другим Group/Slot
-	statData.Lock()
-	defer statData.Unlock()
 
 	if statData.Empty() {
 		return emptyBannerID, ErrNoBannersAssignedForSlot
@@ -129,7 +129,7 @@ func (a *App) SelectBanner(
 	return bestBannerID, nil
 }
 
-func (a *App) getStats(
+func (a *App) loadStatData(
 	ctx context.Context,
 	key appdomain.GroupSlotKey,
 ) (*appdomain.StatData, error) {
@@ -149,11 +149,12 @@ func (a *App) getStats(
 		return statData, nil
 	}
 
-	allowedBanners, err := a.listSlotBanners(ctx, key.SlotID)
+	// получаем список разрешенных баннеров для слота
+	allowedBanners, err := a.listAllowedSlotBanners(ctx, key.SlotID)
 	if err != nil {
 		return nil, err
 	}
-
+	// получаем текущую статистику из БД по группе/слоту
 	bannerStats, err := a.storage.ListBannerStats(ctx, key.GroupID, key.SlotID)
 	if err != nil {
 		return nil, err
@@ -168,7 +169,7 @@ func (a *App) getStats(
 			ClickCount: 1,
 		})
 	})
-	// заполняем данными из БД
+	// заполняем данными из БД (переписывая где надо дефолтные значения из предыдущего шага)
 	for _, row := range bannerStats {
 		statData.Set(row.BannerID, &row)
 	}

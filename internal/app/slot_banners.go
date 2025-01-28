@@ -28,11 +28,11 @@ func (a *App) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerI
 		return err
 	}
 
-	bannersCache, ok := a.slotBannersCache.Get(slotID)
+	allowedBannersCache, ok := a.allowedSlotBannersCache.Get(slotID)
 	if ok {
-		bannersCache.Set(bannerID, struct{}{})
+		allowedBannersCache.Set(bannerID, struct{}{})
 	}
-
+	// очищаем кэш ротаций чтобы перегрузилась статистика ротаций
 	a.rotationsCache.Clear()
 
 	return nil
@@ -58,18 +58,18 @@ func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, ba
 	if err != nil {
 		return err
 	}
-	bannersCache, ok := a.slotBannersCache.Get(slotID)
+	allowedBannersCache, ok := a.allowedSlotBannersCache.Get(slotID)
 	if ok {
-		bannersCache.Remove(bannerID)
+		allowedBannersCache.Remove(bannerID)
 	}
-
+	// очищаем кэш ротаций чтобы перегрузилась статистика ротаций
 	a.rotationsCache.Clear()
 
 	return nil
 }
 
-func (a *App) listSlotBanners(ctx context.Context, slotID domain.SlotID) (bannersCache, error) {
-	bannersCache, ok := a.slotBannersCache.Get(slotID)
+func (a *App) listAllowedSlotBanners(ctx context.Context, slotID domain.SlotID) (bannersCache, error) {
+	bannersCache, ok := a.allowedSlotBannersCache.Get(slotID)
 	if !ok {
 		banners, err := a.storage.ListSlotBanners(ctx, slotID)
 		if err != nil {
@@ -79,13 +79,17 @@ func (a *App) listSlotBanners(ctx context.Context, slotID domain.SlotID) (banner
 		for _, b := range banners {
 			bannersCache.Set(b.ID, struct{}{})
 		}
-		a.slotBannersCache.Set(slotID, bannersCache)
+		a.allowedSlotBannersCache.Set(slotID, bannersCache)
 	}
 	return bannersCache, nil
 }
 
-func (a *App) checkSlotBanner(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) (bool, error) {
-	bannersCache, err := a.listSlotBanners(ctx, slotID)
+func (a *App) checkAllowedSlotBanner(
+	ctx context.Context,
+	slotID domain.SlotID,
+	bannerID domain.BannerID,
+) (bool, error) {
+	bannersCache, err := a.listAllowedSlotBanners(ctx, slotID)
 	if err != nil {
 		return false, err
 	}

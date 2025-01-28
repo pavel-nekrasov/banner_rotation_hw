@@ -20,12 +20,14 @@ import (
 
 type AppIntegrationSuite struct {
 	suite.Suite
-	logger  *logger.Logger
-	config  config.ServerConfig
-	dbConn  *storage.Connection
-	storage *storage.Storage
-	app     *rotatorapp.App
-	random  *rand.Rand
+	logger    *logger.Logger
+	config    config.ServerConfig
+	dbConn    *storage.Connection
+	storage   *storage.Storage
+	app       *rotatorapp.App
+	random    *rand.Rand
+	ctx       context.Context
+	ctxCancel context.CancelFunc
 }
 
 const (
@@ -34,7 +36,7 @@ const (
 	BannerCount = 20
 )
 
-func TestSAppIntegrationSuite(t *testing.T) {
+func TestAppIntegrationSuite(t *testing.T) {
 	suite.Run(t, new(AppIntegrationSuite))
 }
 
@@ -53,11 +55,12 @@ func (s *AppIntegrationSuite) SetupSuite() {
 }
 
 func (s *AppIntegrationSuite) SetupTest() {
-	s.app = rotatorapp.New(s.logger, s.storage, nil, s.config.Cache)
+	s.ctx, s.ctxCancel = context.WithCancel(context.Background())
+	s.app = rotatorapp.New(s.ctx, s.logger, s.storage, nil, s.config.Cache)
 	if err := s.dbConn.Connect(context.Background()); err != nil {
 		log.Fatal(err)
 	}
-
+	s.cleanupDB()
 	for i := 0; i < GroupCount; i++ {
 		s.storage.CreateGroup(
 			context.Background(),
@@ -87,7 +90,13 @@ func (s *AppIntegrationSuite) SetupTest() {
 }
 
 func (s *AppIntegrationSuite) TearDownTest() {
+	defer s.ctxCancel()
 	defer s.dbConn.Close()
+
+	s.cleanupDB()
+}
+
+func (s *AppIntegrationSuite) cleanupDB() {
 	s.dbConn.DB.Exec(context.Background(), "TRUNCATE banner_stats CASCADE")
 	s.dbConn.DB.Exec(context.Background(), "TRUNCATE slot_banners CASCADE")
 	s.dbConn.DB.Exec(context.Background(), "TRUNCATE banners CASCADE")
@@ -135,7 +144,7 @@ func (s *AppIntegrationSuite) TestSlotBannersNegative() {
 //  1. Перебор всех: после большого количества показов, каждый баннер должен быть показан хотя один раз
 //  2. Выбор популярных: если на один из баннеров кликают,
 //     у него должно быть существенно больше показов чем у остальных
-func (s *AppIntegrationSuite) TestSingleLogicCheckCrud() {
+func (s *AppIntegrationSuite) TestSingleLogicCheck() {
 	const groupID = domain.GroupID("Group0ID")
 	const slotID = domain.SlotID("Slot0ID")
 	const bannerID = domain.BannerID("Banner0ID")
@@ -226,7 +235,7 @@ func (s *AppIntegrationSuite) TestSingleLogicCheckCrud() {
 // в тесте кликаем X раз случайно на разные баннеры в разных слотах
 //
 //	проверка правильности работы в условиях конкурентности
-func (s *AppIntegrationSuite) TestMultiLogicCheckCrud() {
+func (s *AppIntegrationSuite) TestMultiLogicCheck() {
 	const numberOfClicks = 10000
 	const numberOfShows = 100000
 	const batchSize = 50 // операции делаем пачками по 50 горутин
