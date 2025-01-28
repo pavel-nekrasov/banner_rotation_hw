@@ -45,7 +45,7 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	storage := storage.New(
+	dbConn := storage.NewConnection(
 		config.Storage.Host,
 		config.Storage.Port,
 		config.Storage.DBName,
@@ -54,7 +54,7 @@ func main() {
 	)
 
 	logg.Info("Applying migrations...")
-	err := storage.Migrate(ctx, "/migrations")
+	err := dbConn.Migrate(ctx, "/migrations")
 	if err != nil {
 		logg.Error(fmt.Sprintf("Failed to apply migrations: %v", err))
 		cancel()

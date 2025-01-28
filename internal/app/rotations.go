@@ -2,6 +2,9 @@ package rotatorapp
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 
 	appdomain "github.com/pavel-nekrasov/banner_rotation_hw/internal/app/domain"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
@@ -45,6 +48,7 @@ func (a *App) ClickBanner(
 		return err
 	}
 
+	// лочимся на конкретном бакете чтобы не мешать обработке событий с другим Group/Slot
 	statData.Lock()
 	defer statData.Unlock()
 
@@ -60,7 +64,14 @@ func (a *App) ClickBanner(
 	}
 
 	statData.IncrementClick(bannerID)
-	// TODO: add queue publish
+
+	a.notify(appdomain.NotificationEvent{
+		EventType: "click",
+		GroupID:   key.GroupID,
+		SlotID:    key.SlotID,
+		BannerID:  bannerID,
+		Timestamp: time.Now().UnixMilli(),
+	})
 
 	return nil
 }
@@ -89,6 +100,7 @@ func (a *App) SelectBanner(
 		return emptyBannerID, err
 	}
 
+	// лочимся на конкретном бакете чтобы не мешать обработке событий с другим Group/Slot
 	statData.Lock()
 	defer statData.Unlock()
 
@@ -105,7 +117,14 @@ func (a *App) SelectBanner(
 	}
 
 	statData.IncrementShow(bestBannerID)
-	// TODO: add queue publish
+
+	a.notify(appdomain.NotificationEvent{
+		EventType: "show",
+		GroupID:   key.GroupID,
+		SlotID:    key.SlotID,
+		BannerID:  bestBannerID,
+		Timestamp: time.Now().UnixMilli(),
+	})
 
 	return bestBannerID, nil
 }
@@ -155,4 +174,20 @@ func (a *App) getStats(
 	}
 	a.rotationsCache.Set(key, statData)
 	return statData, nil
+}
+
+func (a *App) notify(payload appdomain.NotificationEvent) error {
+	if a.publisher == nil {
+		return nil
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to serialize event: %w", err)
+	}
+	err = a.publisher.Publish(data)
+	if err != nil {
+		return fmt.Errorf("failed to publish event: %w", err)
+	}
+	return nil
 }

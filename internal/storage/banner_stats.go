@@ -16,7 +16,7 @@ func (s *Storage) ListBannerStats(
 	slotID domain.SlotID,
 ) ([]domain.BannerStat, error) {
 	result := make([]domain.BannerStat, 0)
-	rows, err := s.DB.Query(ctx,
+	rows, err := s.conn.DB.Query(ctx,
 		`SELECT r.banner_id, r.show_count, r.click_count 
 		FROM banner_stats r 
 		INNER JOIN slot_banners sb ON sb.banner_id = r.banner_id AND sb.slot_id = r.slot_id 
@@ -55,7 +55,7 @@ func (s *Storage) GetBannerStat(
 	bannerID domain.BannerID,
 ) (domain.BannerStat, error) {
 	var entity domain.BannerStat
-	err := s.DB.QueryRow(ctx,
+	err := s.conn.DB.QueryRow(ctx,
 		`SELECT r.banner_id, r.show_count, r.click_count 
 		FROM banner_stats r 
 		INNER JOIN slot_banners sb ON sb.banner_id = r.banner_id AND sb.slot_id = r.slot_id 
@@ -84,7 +84,7 @@ func (s *Storage) BannerStatTotals(
 	ctx context.Context,
 ) (int64, int64, error) {
 	var showSum, clickSum, recCnt int64
-	err := s.DB.QueryRow(ctx,
+	err := s.conn.DB.QueryRow(ctx,
 		`SELECT sum(r.show_count) AS show_sum, sum(r.click_count) AS click_sum, count(r.id) AS rec_count 
 		FROM banner_stats r 
 		INNER JOIN slot_banners sb ON sb.banner_id = r.banner_id AND sb.slot_id = r.slot_id`,
@@ -108,7 +108,7 @@ func (s *Storage) IncrementBannerStatClick(
 	slotID domain.SlotID,
 	bannerID domain.BannerID,
 ) error {
-	res, err := s.DB.Exec(ctx, `INSERT INTO banner_stats (banner_id, group_id, slot_id, click_count)
+	res, err := s.conn.DB.Exec(ctx, `INSERT INTO banner_stats (banner_id, group_id, slot_id, click_count)
     VALUES ($1, $2, $3, 2)
     ON CONFLICT (banner_id, group_id, slot_id) DO UPDATE SET click_count = banner_stats.click_count + 1;`,
 		bannerID,
@@ -135,7 +135,7 @@ func (s *Storage) IncrementBannerStatShow(
 	slotID domain.SlotID,
 	bannerID domain.BannerID,
 ) error {
-	res, err := s.DB.Exec(ctx, `INSERT INTO banner_stats (banner_id, group_id, slot_id, show_count)
+	res, err := s.conn.DB.Exec(ctx, `INSERT INTO banner_stats (banner_id, group_id, slot_id, show_count)
     VALUES ($1, $2, $3, 2)
     ON CONFLICT (banner_id, group_id, slot_id) DO UPDATE SET show_count = banner_stats.show_count + 1;`,
 		bannerID,

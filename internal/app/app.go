@@ -18,9 +18,10 @@ type (
 )
 
 type App struct {
+	config           config.CacheConf
 	logger           common.Logger
 	storage          Storage
-	config           config.CacheConf
+	publisher        Publisher
 	mut              sync.RWMutex
 	bannersCache     cache.Cache[domain.BannerID, domain.Banner]
 	groupsCache      cache.Cache[domain.GroupID, domain.Group]
@@ -74,10 +75,15 @@ type Storage interface {
 	) (domain.BannerStat, error)
 }
 
-func New(logger common.Logger, storage Storage, config config.CacheConf) *App {
+type Publisher interface {
+	Publish(data []byte) error
+}
+
+func New(logger common.Logger, storage Storage, publisher Publisher, config config.CacheConf) *App {
 	return &App{
 		logger:           logger,
 		storage:          storage,
+		publisher:        publisher,
 		config:           config,
 		groupsCache:      cache.NewLRUCache[domain.GroupID, domain.Group](config.L1Capacity),
 		slotsCache:       cache.NewLRUCache[domain.SlotID, domain.Slot](config.L1Capacity),

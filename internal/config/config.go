@@ -21,6 +21,7 @@ type ServerConfig struct {
 	Endpoint EndpointConf
 	Storage  StorageConf
 	Cache    CacheConf
+	Queue    QueueProducerConf
 }
 
 type LoggerConf struct {
@@ -30,7 +31,6 @@ type LoggerConf struct {
 
 type EndpointConf struct {
 	Host     string
-	HTTPPort int
 	GRPCPort int
 }
 
@@ -44,6 +44,18 @@ type StorageConf struct {
 
 type CacheConf struct {
 	L1Capacity int
+}
+
+type QueueServerConf struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+}
+type QueueProducerConf struct {
+	QueueServerConf
+	Exchange   string
+	RoutingKey string
 }
 
 func NewRotatorConfig(filePath string) (c ServerConfig) {

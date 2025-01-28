@@ -15,7 +15,6 @@ import (
 type Server struct {
 	host     string
 	grpcPort int
-	httpPort int
 	logger   Logger
 	app      services.Application
 	server   *grpc.Server
@@ -29,11 +28,10 @@ type Logger interface {
 	Debug(msg string, args ...any)
 }
 
-func NewServer(host string, grpcPort int, httpPort int, logger Logger, app services.Application) *Server {
+func NewServer(host string, grpcPort int, logger Logger, app services.Application) *Server {
 	return &Server{
 		host:     host,
 		grpcPort: grpcPort,
-		httpPort: httpPort,
 		logger:   logger,
 		app:      app,
 	}

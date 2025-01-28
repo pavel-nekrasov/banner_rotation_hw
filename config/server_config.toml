@@ -4,7 +4,6 @@ output = "stdout"
 
 [endpoint]
 host = ""
-httpPort = 8080
 grpcPort = 15000
 
 [storage]
@@ -16,3 +15,10 @@ password = "password"
 
 [cache]
 L1Capacity = 100
+
+[queue]
+host = "rotator_mq"
+port = 5672
+exchange = "banner_rotation_stats"
+user = "guest"
+password = "guest"

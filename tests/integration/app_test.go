@@ -22,6 +22,7 @@ type AppIntegrationSuite struct {
 	suite.Suite
 	logger  *logger.Logger
 	config  config.ServerConfig
+	dbConn  *storage.Connection
 	storage *storage.Storage
 	app     *rotatorapp.App
 	random  *rand.Rand
@@ -41,18 +42,19 @@ func (s *AppIntegrationSuite) SetupSuite() {
 	s.random = rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 	s.config = config.NewRotatorConfig("/app/config/server_config.toml")
 	s.logger = logger.New(s.config.Logger.Level, s.config.Logger.Output)
-	s.storage = storage.New(
+	s.dbConn = storage.NewConnection(
 		s.config.Storage.Host,
 		s.config.Storage.Port,
 		s.config.Storage.DBName,
 		s.config.Storage.User,
 		s.config.Storage.Password,
 	)
+	s.storage = storage.NewStorage(s.dbConn)
 }
 
 func (s *AppIntegrationSuite) SetupTest() {
-	s.app = rotatorapp.New(s.logger, s.storage, s.config.Cache)
-	if err := s.storage.Connect(context.Background()); err != nil {
+	s.app = rotatorapp.New(s.logger, s.storage, nil, s.config.Cache)
+	if err := s.dbConn.Connect(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 
@@ -85,12 +87,12 @@ func (s *AppIntegrationSuite) SetupTest() {
 }
 
 func (s *AppIntegrationSuite) TearDownTest() {
-	defer s.storage.Close(context.Background())
-	s.storage.DB.Exec(context.Background(), "TRUNCATE banner_stats CASCADE")
-	s.storage.DB.Exec(context.Background(), "TRUNCATE slot_banners CASCADE")
-	s.storage.DB.Exec(context.Background(), "TRUNCATE banners CASCADE")
-	s.storage.DB.Exec(context.Background(), "TRUNCATE groups CASCADE")
-	s.storage.DB.Exec(context.Background(), "TRUNCATE slots CASCADE")
+	defer s.dbConn.Close()
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE banner_stats CASCADE")
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE slot_banners CASCADE")
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE banners CASCADE")
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE groups CASCADE")
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE slots CASCADE")
 }
 
 func (s *AppIntegrationSuite) TestSlotBannersNegative() {
@@ -225,8 +227,8 @@ func (s *AppIntegrationSuite) TestSingleLogicCheckCrud() {
 //
 //	проверка правильности работы в условиях конкурентности
 func (s *AppIntegrationSuite) TestMultiLogicCheckCrud() {
-	const numberOfClicks = 1000
-	const numberOfShows = 10000
+	const numberOfClicks = 10000
+	const numberOfShows = 100000
 	const batchSize = 50 // операции делаем пачками по 50 горутин
 
 	// добавляем все баннеры в показ для всех слотов

@@ -37,5 +37,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/satori/go.uuid v1.2.0
+	github.com/streadway/amqp v1.1.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

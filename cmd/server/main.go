@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +12,7 @@ import (
 	rotatorapp "github.com/pavel-nekrasov/banner_rotation_hw/internal/app"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/config"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/logger"
+	"github.com/pavel-nekrasov/banner_rotation_hw/internal/queue"
 	internalgrpc "github.com/pavel-nekrasov/banner_rotation_hw/internal/server/grpc"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/storage"
 )
@@ -37,25 +39,50 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	storage := storage.New(
+	// db
+	dbConn := storage.NewConnection(
 		config.Storage.Host,
 		config.Storage.Port,
 		config.Storage.DBName,
 		config.Storage.User,
 		config.Storage.Password,
 	)
-	err := storage.Connect(ctx)
+
+	storage := storage.NewStorage(
+		dbConn,
+	)
+	err := dbConn.Connect(ctx)
 	if err != nil {
 		log.Error("failed to connect to storage: " + err.Error())
 		log.Close()
 		os.Exit(1) //nolint:gocritic
 	}
-	defer storage.Close(ctx)
+	defer dbConn.Close()
 
-	app := rotatorapp.New(log, storage, config.Cache)
+	// queue
+	queueConn := queue.NewConnection(config.Queue.QueueServerConf)
+	if err := queueConn.Connect(); err != nil {
+		log.Error(fmt.Sprintf("failed to connect to queue: %s", err.Error()))
+		dbConn.Close()
+		log.Close()
+		os.Exit(1)
+	}
+	defer queueConn.Close()
+
+	queueProducer := queue.NewProducer(queueConn, config.Queue)
+	if err := queueProducer.Start(); err != nil {
+		log.Error(fmt.Sprintf("failed to create exchange: %s", err.Error()))
+		queueConn.Close()
+		dbConn.Close()
+		log.Close()
+		os.Exit(1)
+	}
+	defer queueProducer.Close()
+
+	// grpc service
+	app := rotatorapp.New(log, storage, queueProducer, config.Cache)
 	server := internalgrpc.NewServer(config.Endpoint.Host,
 		config.Endpoint.GRPCPort,
-		config.Endpoint.HTTPPort,
 		log,
 		app,
 	)
@@ -76,6 +103,10 @@ func main() {
 	if err := server.Start(ctx); err != nil {
 		log.Error("failed to start rotator server: " + err.Error())
 		cancel()
+		queueProducer.Close()
+		queueConn.Close()
+		dbConn.Close()
+		log.Close()
 		os.Exit(1)
 	}
 	log.Info("Banner Rotator is stopped")

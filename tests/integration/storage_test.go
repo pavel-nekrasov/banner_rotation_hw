@@ -13,6 +13,7 @@ import (
 
 type StorageIntegrationSuite struct {
 	suite.Suite
+	dbConn  *storage.Connection
 	storage *storage.Storage
 }
 
@@ -22,26 +23,29 @@ func TestStorageIntegrationSuite(t *testing.T) {
 
 func (s *StorageIntegrationSuite) SetupSuite() {
 	config := config.NewRotatorConfig("/app/config/server_config.toml")
-	s.storage = storage.New(
+	s.dbConn = storage.NewConnection(
 		config.Storage.Host,
 		config.Storage.Port,
 		config.Storage.DBName,
 		config.Storage.User,
 		config.Storage.Password,
 	)
+	s.storage = storage.NewStorage(s.dbConn)
 }
 
 func (s *StorageIntegrationSuite) SetupTest() {
-	if err := s.storage.Connect(context.Background()); err != nil {
+	if err := s.dbConn.Connect(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (s *StorageIntegrationSuite) TearDownTest() {
-	defer s.storage.Close(context.Background())
-	s.storage.DB.Exec(context.Background(), "TRUNCATE banners CASCADE")
-	s.storage.DB.Exec(context.Background(), "TRUNCATE groups CASCADE")
-	s.storage.DB.Exec(context.Background(), "TRUNCATE slots CASCADE")
+	defer s.dbConn.Close()
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE banner_stats CASCADE")
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE slot_banners CASCADE")
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE banners CASCADE")
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE groups CASCADE")
+	s.dbConn.DB.Exec(context.Background(), "TRUNCATE slots CASCADE")
 }
 
 func (s *StorageIntegrationSuite) TestBannerCrud() { //nolint:dupl

@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Storage) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
-	res, err := s.DB.Exec(ctx, `INSERT INTO slot_banners 
+	res, err := s.conn.DB.Exec(ctx, `INSERT INTO slot_banners 
 		(slot_id, banner_id) 
 		VALUES ($1, $2)`,
 		slotID,
@@ -33,7 +33,7 @@ func (s *Storage) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, ban
 }
 
 func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
-	res, err := s.DB.Exec(ctx, "DELETE FROM slot_banners WHERE slot_id = $1 AND banner_id = $2", slotID, bannerID)
+	res, err := s.conn.DB.Exec(ctx, "DELETE FROM slot_banners WHERE slot_id = $1 AND banner_id = $2", slotID, bannerID)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (s *Storage) GetSlotBanner(
 	var entity domain.Banner
 	var description sql.NullString
 
-	err := s.DB.QueryRow(ctx,
+	err := s.conn.DB.QueryRow(ctx,
 		`SELECT b.id, b.description 
 		FROM banners b 
 		INNER JOIN slot_banners sb ON sb.banner_id = b.id 
@@ -85,7 +85,7 @@ func (s *Storage) GetSlotBanner(
 
 func (s *Storage) ListSlotBanners(ctx context.Context, slotID domain.SlotID) ([]domain.Banner, error) {
 	result := make([]domain.Banner, 0)
-	rows, err := s.DB.Query(ctx,
+	rows, err := s.conn.DB.Query(ctx,
 		`SELECT b.id, b.description 
 		FROM banners b 
 		INNER JOIN slot_banners sb ON sb.banner_id = b.id 
