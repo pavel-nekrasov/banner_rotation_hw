@@ -2,10 +2,10 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/customerrors"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
@@ -16,7 +16,7 @@ func (s *Storage) ListBannerStats(
 	slotID domain.SlotID,
 ) ([]domain.BannerStat, error) {
 	result := make([]domain.BannerStat, 0)
-	rows, err := s.DB.QueryContext(ctx,
+	rows, err := s.DB.Query(ctx,
 		`SELECT r.banner_id, r.show_count, r.click_count 
 		FROM banner_stats r 
 		INNER JOIN slot_banners sb ON sb.banner_id = r.banner_id AND sb.slot_id = r.slot_id 
@@ -24,7 +24,7 @@ func (s *Storage) ListBannerStats(
 		groupID,
 		slotID,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return result, nil
 	}
 	if err != nil {
@@ -54,7 +54,8 @@ func (s *Storage) GetBannerStat(
 	slotID domain.SlotID,
 	bannerID domain.BannerID,
 ) (domain.BannerStat, error) {
-	row := s.DB.QueryRowContext(ctx,
+	var entity domain.BannerStat
+	err := s.DB.QueryRow(ctx,
 		`SELECT r.banner_id, r.show_count, r.click_count 
 		FROM banner_stats r 
 		INNER JOIN slot_banners sb ON sb.banner_id = r.banner_id AND sb.slot_id = r.slot_id 
@@ -62,27 +63,43 @@ func (s *Storage) GetBannerStat(
 		bannerID,
 		groupID,
 		slotID,
+	).Scan(&entity.BannerID,
+		&entity.ShowCount,
+		&entity.ClickCount,
 	)
-	if errors.Is(row.Err(), sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.BannerStat{},
 			customerrors.NotFound{
 				Message: fmt.Sprintf("Banner stat entry for banner/group/slot %v/%v/%v not found", bannerID, groupID, slotID),
 			}
 	}
-	if row.Err() != nil {
-		return domain.BannerStat{}, row.Err()
-	}
-
-	var entity domain.BannerStat
-	err := row.Scan(&entity.BannerID,
-		&entity.ShowCount,
-		&entity.ClickCount,
-	)
 	if err != nil {
 		return domain.BannerStat{}, err
 	}
 
 	return entity, nil
+}
+
+func (s *Storage) BannerStatTotals(
+	ctx context.Context,
+) (int64, int64, error) {
+	var showSum, clickSum, recCnt int64
+	err := s.DB.QueryRow(ctx,
+		`SELECT sum(r.show_count) AS show_sum, sum(r.click_count) AS click_sum, count(r.id) AS rec_count 
+		FROM banner_stats r 
+		INNER JOIN slot_banners sb ON sb.banner_id = r.banner_id AND sb.slot_id = r.slot_id`,
+	).Scan(&showSum,
+		&clickSum,
+		&recCnt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, 0, customerrors.NotFound{}
+	}
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return showSum - recCnt, clickSum - recCnt, nil
 }
 
 func (s *Storage) IncrementBannerStatClick(
@@ -91,7 +108,7 @@ func (s *Storage) IncrementBannerStatClick(
 	slotID domain.SlotID,
 	bannerID domain.BannerID,
 ) error {
-	res, err := s.DB.ExecContext(ctx, `INSERT INTO banner_stats (banner_id, group_id, slot_id, click_count)
+	res, err := s.DB.Exec(ctx, `INSERT INTO banner_stats (banner_id, group_id, slot_id, click_count)
     VALUES ($1, $2, $3, 2)
     ON CONFLICT (banner_id, group_id, slot_id) DO UPDATE SET click_count = banner_stats.click_count + 1;`,
 		bannerID,
@@ -102,11 +119,7 @@ func (s *Storage) IncrementBannerStatClick(
 		return err
 	}
 
-	cnt, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
+	cnt := res.RowsAffected()
 	if cnt == 0 {
 		return customerrors.NotFound{
 			Message: fmt.Sprintf("Banner stat entry for banner/group/slot %v/%v/%v not found", bannerID, groupID, slotID),
@@ -122,7 +135,7 @@ func (s *Storage) IncrementBannerStatShow(
 	slotID domain.SlotID,
 	bannerID domain.BannerID,
 ) error {
-	res, err := s.DB.ExecContext(ctx, `INSERT INTO banner_stats (banner_id, group_id, slot_id, show_count)
+	res, err := s.DB.Exec(ctx, `INSERT INTO banner_stats (banner_id, group_id, slot_id, show_count)
     VALUES ($1, $2, $3, 2)
     ON CONFLICT (banner_id, group_id, slot_id) DO UPDATE SET show_count = banner_stats.show_count + 1;`,
 		bannerID,
@@ -133,11 +146,7 @@ func (s *Storage) IncrementBannerStatShow(
 		return err
 	}
 
-	cnt, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
+	cnt := res.RowsAffected()
 	if cnt == 0 {
 		return customerrors.NotFound{
 			Message: fmt.Sprintf("Banner stat entry for banner/group/slot %v/%v/%v not found", bannerID, groupID, slotID),

@@ -52,18 +52,13 @@ func main() {
 		config.Storage.User,
 		config.Storage.Password,
 	)
-	err := storage.Connect(ctx)
-	if err != nil {
-		logg.Error("failed to connect to storage: " + err.Error())
-		os.Exit(1) //nolint:gocritic
-	}
-	defer storage.Close(ctx)
 
-	logg.Info("Appying migrations...")
-	err = storage.Migrate(ctx, "/migrations")
+	logg.Info("Applying migrations...")
+	err := storage.Migrate(ctx, "/migrations")
 	if err != nil {
 		logg.Error(fmt.Sprintf("Failed to apply migrations: %v", err))
-		os.Exit(1)
+		cancel()
+		os.Exit(1) //nolint: gocritic
 	}
 	logg.Info("Done")
 }

@@ -39,9 +39,9 @@ func (s *StorageIntegrationSuite) SetupTest() {
 
 func (s *StorageIntegrationSuite) TearDownTest() {
 	defer s.storage.Close(context.Background())
-	s.storage.DB.ExecContext(context.Background(), "TRUNCATE banners CASCADE")
-	s.storage.DB.ExecContext(context.Background(), "TRUNCATE groups CASCADE")
-	s.storage.DB.ExecContext(context.Background(), "TRUNCATE slots CASCADE")
+	s.storage.DB.Exec(context.Background(), "TRUNCATE banners CASCADE")
+	s.storage.DB.Exec(context.Background(), "TRUNCATE groups CASCADE")
+	s.storage.DB.Exec(context.Background(), "TRUNCATE slots CASCADE")
 }
 
 func (s *StorageIntegrationSuite) TestBannerCrud() { //nolint:dupl

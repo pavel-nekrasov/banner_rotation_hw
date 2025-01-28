@@ -21,12 +21,12 @@ type App struct {
 	logger           common.Logger
 	storage          Storage
 	config           config.CacheConf
-	mutSlotBanners   sync.RWMutex
+	mut              sync.RWMutex
 	bannersCache     cache.Cache[domain.BannerID, domain.Banner]
 	groupsCache      cache.Cache[domain.GroupID, domain.Group]
 	slotsCache       cache.Cache[domain.SlotID, domain.Slot]
 	slotBannersCache cache.Cache[domain.SlotID, bannersCache]
-	rotationsCache   *appdomain.StatDataCache
+	rotationsCache   cache.Cache[appdomain.GroupSlotKey, *appdomain.StatData]
 }
 
 type Storage interface {
@@ -83,7 +83,7 @@ func New(logger common.Logger, storage Storage, config config.CacheConf) *App {
 		slotsCache:       cache.NewLRUCache[domain.SlotID, domain.Slot](config.L1Capacity),
 		bannersCache:     cache.NewLRUCache[domain.BannerID, domain.Banner](config.L1Capacity),
 		slotBannersCache: cache.NewLRUCache[domain.SlotID, bannersCache](config.L1Capacity),
-		rotationsCache:   appdomain.NewStatDataCache(config.L1Capacity),
+		rotationsCache:   cache.NewLRUCache[appdomain.GroupSlotKey, *appdomain.StatData](config.L1Capacity),
 	}
 }
 

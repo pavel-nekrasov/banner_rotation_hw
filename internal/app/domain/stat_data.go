@@ -21,28 +21,23 @@ func NewStatData() *StatData {
 	}
 }
 
-func (s *StatData) Empty() bool {
-	s.mut.RLock()
-	defer s.mut.RUnlock()
+func (s *StatData) Lock() {
+	s.mut.Lock()
+}
 
+func (s *StatData) Unlock() {
+	s.mut.Unlock()
+}
+
+func (s *StatData) Empty() bool {
 	return s.bannerStats.Len() == 0
 }
 
 func (s *StatData) BestBanner() domain.BannerID {
-	s.mut.RLock()
-	defer s.mut.RUnlock()
-
 	return s.bestBannerID
 }
 
 func (s *StatData) Recalculate() {
-	s.mut.Lock()
-	defer s.mut.Unlock()
-
-	s.recalculateInternal()
-}
-
-func (s *StatData) recalculateInternal() {
 	s.bestBannerID = ""
 	s.totalShowCount = 0
 	var logTotalShowCount float64
@@ -63,45 +58,27 @@ func (s *StatData) recalculateInternal() {
 }
 
 func (s *StatData) Set(bannerID domain.BannerID, bannerStat *domain.BannerStat) {
-	s.mut.Lock()
-	defer s.mut.Unlock()
-
 	s.bannerStats.Set(bannerID, bannerStat)
 }
 
 func (s *StatData) Remove(bannerID domain.BannerID) {
-	s.mut.Lock()
-	defer s.mut.Unlock()
-
 	s.bannerStats.Remove(bannerID)
-	s.recalculateInternal()
 }
 
 func (s *StatData) IncrementClick(bannerID domain.BannerID) {
-	s.mut.Lock()
-	defer s.mut.Unlock()
-
 	data, ok := s.bannerStats.Get(bannerID)
 	if ok {
 		data.ClickCount++
-		s.recalculateInternal()
 	}
 }
 
 func (s *StatData) IncrementShow(bannerID domain.BannerID) {
-	s.mut.Lock()
-	defer s.mut.Unlock()
-
 	data, ok := s.bannerStats.Get(bannerID)
 	if ok {
 		data.ShowCount++
-		s.recalculateInternal()
 	}
 }
 
 func (s *StatData) Range(handler func(key domain.BannerID, data *domain.BannerStat)) {
-	s.mut.RLock()
-	defer s.mut.RUnlock()
-
 	s.bannerStats.Range(handler)
 }

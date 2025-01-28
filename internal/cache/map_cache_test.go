@@ -1,11 +1,11 @@
 package cache
 
 import (
-	"crypto/rand"
-	"math/big"
+	"math/rand"
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -57,7 +57,11 @@ func TestMapCache(t *testing.T) {
 		c.Set("bbb", 200)
 		c.Set("ccc", 300)
 
+		require.Equal(t, 3, c.Len())
+
 		c.Clear()
+
+		require.Equal(t, 0, c.Len())
 
 		val, ok := c.Get("aaa")
 		require.False(t, ok)
@@ -95,7 +99,8 @@ func TestMapCache(t *testing.T) {
 	})
 }
 
-func TestMapCacheMultithreading(t *testing.T) {
+func TestMapCacheMultithreading(_ *testing.T) {
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 	c := NewMapCache[string, int]()
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
@@ -109,10 +114,9 @@ func TestMapCacheMultithreading(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		n, err := rand.Int(rand.Reader, big.NewInt(1000))
-		require.NoError(t, err)
+
 		for i := 0; i < 1_000_000; i++ {
-			c.Get(strconv.Itoa(int(n.Int64())))
+			c.Get(strconv.Itoa(rnd.Intn(1000)))
 		}
 	}()
 

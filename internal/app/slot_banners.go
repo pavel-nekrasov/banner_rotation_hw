@@ -3,7 +3,6 @@ package rotatorapp
 import (
 	"context"
 
-	appdomain "github.com/pavel-nekrasov/banner_rotation_hw/internal/app/domain"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/cache"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
@@ -21,8 +20,8 @@ func (a *App) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerI
 		return err
 	}
 
-	a.mutSlotBanners.Lock()
-	defer a.mutSlotBanners.Unlock()
+	a.mut.Lock()
+	defer a.mut.Unlock()
 
 	err = a.storage.AddBannerToSlot(ctx, slotID, bannerID)
 	if err != nil {
@@ -33,6 +32,9 @@ func (a *App) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerI
 	if ok {
 		bannersCache.Set(bannerID, struct{}{})
 	}
+
+	a.rotationsCache.Clear()
+
 	return nil
 }
 
@@ -49,8 +51,8 @@ func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, ba
 		return err
 	}
 
-	a.mutSlotBanners.Lock()
-	defer a.mutSlotBanners.Unlock()
+	a.mut.Lock()
+	defer a.mut.Unlock()
 
 	err = a.storage.RemoveBannerFromSlot(ctx, slotID, bannerID)
 	if err != nil {
@@ -61,11 +63,7 @@ func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, ba
 		bannersCache.Remove(bannerID)
 	}
 
-	a.rotationsCache.Range(func(key appdomain.GroupSlotKey, data *appdomain.StatData) {
-		if key.SlotID == slotID {
-			data.Remove(bannerID)
-		}
-	})
+	a.rotationsCache.Clear()
 
 	return nil
 }

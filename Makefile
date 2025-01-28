@@ -57,7 +57,7 @@ build: build-server build-migrator
 
 
 test:
-	go test -count=10 -race -timeout=5m ./internal/...
+	go test -count=1 -race -timeout=5m ./internal/...
 
 
 

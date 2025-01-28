@@ -40,13 +40,19 @@ func (a *App) ClickBanner(
 	}
 
 	key := appdomain.GroupSlotKey{GroupID: groupID, SlotID: slotID}
-	a.rotationsCache.Lock(key)
-	defer a.rotationsCache.Unlock(key)
-
 	statData, err := a.getStats(ctx, key)
 	if err != nil {
 		return err
 	}
+
+	statData.Lock()
+	defer statData.Unlock()
+
+	if statData.Empty() {
+		return ErrNoBannersAssignedForSlot
+	}
+
+	statData.Recalculate()
 
 	err = a.storage.IncrementBannerStatClick(ctx, groupID, slotID, bannerID)
 	if err != nil {
@@ -78,13 +84,19 @@ func (a *App) SelectBanner(
 	}
 
 	key := appdomain.GroupSlotKey{GroupID: groupID, SlotID: slotID}
-	a.rotationsCache.Lock(key)
-	defer a.rotationsCache.Unlock(key)
-
 	statData, err := a.getStats(ctx, key)
 	if err != nil {
 		return emptyBannerID, err
 	}
+
+	statData.Lock()
+	defer statData.Unlock()
+
+	if statData.Empty() {
+		return emptyBannerID, ErrNoBannersAssignedForSlot
+	}
+
+	statData.Recalculate()
 	bestBannerID := statData.BestBanner()
 
 	err = a.storage.IncrementBannerStatShow(ctx, groupID, slotID, bestBannerID)
@@ -105,12 +117,20 @@ func (a *App) getStats(
 	var statData *appdomain.StatData
 
 	statData, ok := a.rotationsCache.Get(key)
-
 	if ok {
 		return statData, nil
 	}
 
-	slotBanners, err := a.listSlotBanners(ctx, key.SlotID)
+	a.mut.Lock()
+	defer a.mut.Unlock()
+
+	// double check
+	statData, ok = a.rotationsCache.Get(key)
+	if ok {
+		return statData, nil
+	}
+
+	allowedBanners, err := a.listSlotBanners(ctx, key.SlotID)
 	if err != nil {
 		return nil, err
 	}
@@ -121,22 +141,18 @@ func (a *App) getStats(
 	}
 
 	statData = appdomain.NewStatData()
-
-	slotBanners.Range(func(key domain.BannerID, _ struct{}) {
+	// заполняем из списка разрешенных баннеров дефолтными значениями
+	allowedBanners.Range(func(key domain.BannerID, _ struct{}) {
 		statData.Set(key, &domain.BannerStat{
 			BannerID:   key,
 			ShowCount:  1,
 			ClickCount: 1,
 		})
 	})
-
+	// заполняем данными из БД
 	for _, row := range bannerStats {
 		statData.Set(row.BannerID, &row)
 	}
-	if statData.Empty() {
-		return nil, ErrNoBannersAssignedForSlot
-	}
-	statData.Recalculate()
 	a.rotationsCache.Set(key, statData)
 	return statData, nil
 }

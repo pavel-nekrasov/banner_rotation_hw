@@ -44,7 +44,6 @@ type StorageConf struct {
 
 type CacheConf struct {
 	L1Capacity int
-	L2Capacity int
 }
 
 func NewRotatorConfig(filePath string) (c ServerConfig) {

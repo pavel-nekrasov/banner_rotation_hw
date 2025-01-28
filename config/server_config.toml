@@ -15,5 +15,4 @@ user = "otus"
 password = "password"
 
 [cache]
-L1Capacity = 10
-L2Capacity = 10
+L1Capacity = 100

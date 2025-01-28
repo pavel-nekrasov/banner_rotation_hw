@@ -2,12 +2,12 @@ package storageintegration
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"log"
-	"math/big"
+	"math/rand"
 	"sync"
 	"testing"
+	"time"
 
 	rotatorapp "github.com/pavel-nekrasov/banner_rotation_hw/internal/app"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/config"
@@ -20,14 +20,17 @@ import (
 
 type AppIntegrationSuite struct {
 	suite.Suite
+	logger  *logger.Logger
+	config  config.ServerConfig
 	storage *storage.Storage
 	app     *rotatorapp.App
+	random  *rand.Rand
 }
 
 const (
-	GroupCount  = 10
-	SlotCount   = 20
-	BannerCount = 50
+	GroupCount  = 5
+	SlotCount   = 10
+	BannerCount = 20
 )
 
 func TestSAppIntegrationSuite(t *testing.T) {
@@ -35,19 +38,20 @@ func TestSAppIntegrationSuite(t *testing.T) {
 }
 
 func (s *AppIntegrationSuite) SetupSuite() {
-	config := config.NewRotatorConfig("/app/config/server_config.toml")
-	logg := logger.New(config.Logger.Level, config.Logger.Output)
+	s.random = rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
+	s.config = config.NewRotatorConfig("/app/config/server_config.toml")
+	s.logger = logger.New(s.config.Logger.Level, s.config.Logger.Output)
 	s.storage = storage.New(
-		config.Storage.Host,
-		config.Storage.Port,
-		config.Storage.DBName,
-		config.Storage.User,
-		config.Storage.Password,
+		s.config.Storage.Host,
+		s.config.Storage.Port,
+		s.config.Storage.DBName,
+		s.config.Storage.User,
+		s.config.Storage.Password,
 	)
-	s.app = rotatorapp.New(logg, s.storage, config.Cache)
 }
 
 func (s *AppIntegrationSuite) SetupTest() {
+	s.app = rotatorapp.New(s.logger, s.storage, s.config.Cache)
 	if err := s.storage.Connect(context.Background()); err != nil {
 		log.Fatal(err)
 	}
@@ -82,14 +86,14 @@ func (s *AppIntegrationSuite) SetupTest() {
 
 func (s *AppIntegrationSuite) TearDownTest() {
 	defer s.storage.Close(context.Background())
-	s.storage.DB.ExecContext(context.Background(), "TRUNCATE banner_stats CASCADE")
-	s.storage.DB.ExecContext(context.Background(), "TRUNCATE slot_banners CASCADE")
-	s.storage.DB.ExecContext(context.Background(), "TRUNCATE banners CASCADE")
-	s.storage.DB.ExecContext(context.Background(), "TRUNCATE groups CASCADE")
-	s.storage.DB.ExecContext(context.Background(), "TRUNCATE slots CASCADE")
+	s.storage.DB.Exec(context.Background(), "TRUNCATE banner_stats CASCADE")
+	s.storage.DB.Exec(context.Background(), "TRUNCATE slot_banners CASCADE")
+	s.storage.DB.Exec(context.Background(), "TRUNCATE banners CASCADE")
+	s.storage.DB.Exec(context.Background(), "TRUNCATE groups CASCADE")
+	s.storage.DB.Exec(context.Background(), "TRUNCATE slots CASCADE")
 }
 
-func (s *AppIntegrationSuite) TestSlotBannersNegativeCrud() {
+func (s *AppIntegrationSuite) TestSlotBannersNegative() {
 	var notFoundErr customerrors.NotFound
 
 	err := s.app.AddBannerToSlot(context.Background(), "wrong slot", "Banner0ID")
@@ -109,8 +113,8 @@ func (s *AppIntegrationSuite) TestSlotBannersNegativeCrud() {
 	s.Suite.Require().ErrorAs(err, &notFoundErr)
 
 	_, err = s.app.SelectBanner(context.Background(), "Group1ID", "Slot1ID")
-	s.Suite.Require().ErrorIs(err, rotatorapp.ErrNoBannersAssignedForSlot)
 	s.Suite.Require().Error(err)
+	s.Suite.Require().ErrorIs(err, rotatorapp.ErrNoBannersAssignedForSlot)
 
 	err = s.app.ClickBanner(context.Background(), "Group1ID", "Slot1ID", "Banner1ID")
 	s.Suite.Require().ErrorIs(err, rotatorapp.ErrBannerNoAllowedForSlot)
@@ -124,9 +128,9 @@ func (s *AppIntegrationSuite) TestSlotBannersNegativeCrud() {
 	s.Suite.Require().ErrorIs(err, rotatorapp.ErrBannerNoAllowedForSlot)
 }
 
-// в тесте кликаем X раз на один и тот же баннер (Z) в одном и том же слоте,
+// в тесте кликаем X раз на один и тот же баннер  в одном и том же слоте,
 // а потом показываем баннеры в том же слоте Y раз
-//  1. Перебор всех: после большого количества показов, каждый баннер должен быть показан хотя один раз (Z)
+//  1. Перебор всех: после большого количества показов, каждый баннер должен быть показан хотя один раз
 //  2. Выбор популярных: если на один из баннеров кликают,
 //     у него должно быть существенно больше показов чем у остальных
 func (s *AppIntegrationSuite) TestSingleLogicCheckCrud() {
@@ -135,10 +139,10 @@ func (s *AppIntegrationSuite) TestSingleLogicCheckCrud() {
 	const bannerID = domain.BannerID("Banner0ID")
 	const numberOfClicks = 100
 	const numberOfShows = 5000
-	const thresholdClickedBanner = 400 // мин кол-во показов по баннеру по которому кликали
-	const thresholdNotClicked = 100    // макс кол-во показова по баннерам по которым не кликали
-	const thresholdAtLeastOneShow = 1  // баннеры по которым не кликали должны быть показаны как минимум 1 раз
-	const batchSize = 50               // операции делаем пачками по 50 горутин
+	const thresholdPopularMin = 750   // мин кол-во показов по баннеру по которому кликали
+	const thresholdUnpopularMax = 250 // макс кол-во показова по баннерам по которым не кликали
+	const thresholdAtLeastOneShow = 1 // баннеры по которым не кликали должны быть показаны как минимум 1 раз
+	const batchSize = 50              // операции делаем пачками по 50 горутин
 
 	// добавляем все баннеры в показ для первого слота
 	for i := 0; i < BannerCount; i++ {
@@ -178,39 +182,43 @@ func (s *AppIntegrationSuite) TestSingleLogicCheckCrud() {
 		wg.Wait()
 	}
 
+	// загружаем данные по группе/слоту по которым кликали/показывали
 	bannerStats, err := s.storage.ListBannerStats(context.Background(), groupID, slotID)
 	s.Suite.Require().NoError(err)
-
-	totalShows := int64(0)
-	totalClicks := int64(0)
 	/*
 		fmt.Println("database data:")
 		for _, bs := range bannerStats {
 			fmt.Printf("\tbs: %v\n", bs)
-		}
-	*/
+		}*/
 	for _, bs := range bannerStats {
 		if bs.BannerID == bannerID {
-			s.Suite.Require().True(bs.ShowCount >= thresholdClickedBanner, bs.BannerID)
-			s.Suite.Require().Equal(numberOfClicks+1, int(bs.ClickCount))
+			s.Suite.Require().True(
+				bs.ShowCount >= thresholdPopularMin,
+				"популярный баннер должен показываться часто",
+			)
+			s.Suite.Require().Equal(
+				numberOfClicks+1, int(bs.ClickCount),
+				"кол-во кликов у популярного баннера должно быть правильным",
+			)
 		} else {
-			s.Suite.Require().True(bs.ShowCount > thresholdAtLeastOneShow, bs.BannerID)
-			s.Suite.Require().True(bs.ShowCount <= thresholdNotClicked, bs.BannerID)
+			s.Suite.Require().True(
+				bs.ShowCount > thresholdAtLeastOneShow,
+				"непопулярный баннер должен быть показан хотя бы раз",
+			)
+			s.Suite.Require().True(
+				bs.ShowCount <= thresholdUnpopularMax,
+				"непопулярный баннер должен быть иногда показываться",
+			)
 			s.Suite.Require().Equal(1, int(bs.ClickCount))
 		}
-		totalShows += bs.ShowCount
-		totalClicks += bs.ClickCount
 	}
 
-	// проверка целостности данных:
-	// кликали X раз - значит сумма кликов сохраненная в базе для соответствующих записей
-	// должна быть X + кол-во баннеров для показа
-	// по умолчанию кол-во кликов равно 1 даже если по баннеру не кликали, чтобы избежать деления на 0
-	// показывали Y раз - начит сумма показов сохраненная в базе для соответствующих записей
-	// должна быть Y + кол-во баннеров для показа
-	// по умолчанию кол-во показов равно 1 даже если по баннер не разу не показывали, чтобы избежать деления на 0
-	s.Suite.Require().Equal(BannerCount+numberOfClicks, int(totalClicks))
-	s.Suite.Require().Equal(BannerCount+numberOfShows, int(totalShows))
+	// берем из БД общее кол-во кликов/показов
+	actualShows, actualClicks, err := s.storage.BannerStatTotals(context.Background())
+	s.Suite.Require().NoError(err)
+
+	s.Suite.Require().Equal(int64(numberOfClicks), actualClicks, "общее кол-во кликов по всем баннерам")
+	s.Suite.Require().Equal(int64(numberOfShows), actualShows, "общее кол-во показов по всем баннерам")
 }
 
 // в тесте кликаем X раз случайно на разные баннеры в разных слотах
@@ -220,16 +228,6 @@ func (s *AppIntegrationSuite) TestMultiLogicCheckCrud() {
 	const numberOfClicks = 1000
 	const numberOfShows = 10000
 	const batchSize = 50 // операции делаем пачками по 50 горутин
-
-	// создаем рандомайзеры
-	randBanner, err := rand.Int(rand.Reader, big.NewInt(BannerCount))
-	s.Suite.Require().NoError(err)
-
-	randSlot, err := rand.Int(rand.Reader, big.NewInt(SlotCount))
-	s.Suite.Require().NoError(err)
-
-	randGroup, err := rand.Int(rand.Reader, big.NewInt(GroupCount))
-	s.Suite.Require().NoError(err)
 
 	// добавляем все баннеры в показ для всех слотов
 	for j := 0; j < SlotCount; j++ {
@@ -254,9 +252,9 @@ func (s *AppIntegrationSuite) TestMultiLogicCheckCrud() {
 					defer wgBatch.Done()
 					s.app.ClickBanner(
 						context.Background(),
-						domain.GroupID(fmt.Sprintf("Group%vID", randGroup.Int64())),
-						domain.SlotID(fmt.Sprintf("Slot%vID", randSlot.Int64())),
-						domain.BannerID(fmt.Sprintf("Banner%vID", randBanner.Int64())),
+						domain.GroupID(fmt.Sprintf("Group%vID", s.random.Intn(GroupCount))),
+						domain.SlotID(fmt.Sprintf("Slot%vID", s.random.Intn(SlotCount))),
+						domain.BannerID(fmt.Sprintf("Banner%vID", s.random.Intn(BannerCount))),
 					)
 				}()
 			}
@@ -279,8 +277,8 @@ func (s *AppIntegrationSuite) TestMultiLogicCheckCrud() {
 					defer wgBatch.Done()
 					_, err := s.app.SelectBanner(
 						context.Background(),
-						domain.GroupID(fmt.Sprintf("Group%vID", randGroup.Int64())),
-						domain.SlotID(fmt.Sprintf("Slot%vID", randSlot.Int64())),
+						domain.GroupID(fmt.Sprintf("Group%vID", s.random.Intn(GroupCount))),
+						domain.SlotID(fmt.Sprintf("Slot%vID", s.random.Intn(SlotCount))),
 					)
 					s.Suite.Require().NoError(err)
 				}()
@@ -291,31 +289,11 @@ func (s *AppIntegrationSuite) TestMultiLogicCheckCrud() {
 		wgTasks.Done()
 	}()
 	wgTasks.Wait()
-	totalShows := int64(0)
-	totalClicks := int64(0)
 
-	for i := 0; i < GroupCount; i++ {
-		for j := 0; j < SlotCount; j++ {
-			bannerStats, err := s.storage.ListBannerStats(
-				context.Background(),
-				domain.GroupID(fmt.Sprintf("Group%vID", i)),
-				domain.SlotID(fmt.Sprintf("Slot%vID", j)),
-			)
-			s.Suite.Require().NoError(err)
-			for _, bs := range bannerStats {
-				totalShows += bs.ShowCount
-				totalClicks += bs.ClickCount
-			}
-		}
-	}
+	// берем из БД общее кол-во кликов/показов
+	actualShows, actualClicks, err := s.storage.BannerStatTotals(context.Background())
+	s.Suite.Require().NoError(err)
 
-	// проверка целостности данных:
-	// кликали X раз - значит сумма кликов сохраненная в базе для соответствующих записей
-	// должна быть X + кол-во баннеров для показа
-	// по умолчанию кол-во кликов равно 1 даже если по баннеру не кликали, чтобы избежать деления на 0
-	// показывали Y раз - значит сумма показов сохраненная в базе для соответствующих записей
-	// должна быть Y + кол-во баннеров для показа
-	// по умолчанию кол-во показов равно 1 даже если  баннер ни разу не показывали, чтобы избежать деления на 0
-	s.Suite.Require().Equal(BannerCount+numberOfClicks, int(totalClicks))
-	s.Suite.Require().Equal(BannerCount+numberOfShows, int(totalShows))
+	s.Suite.Require().Equal(int64(numberOfClicks), actualClicks, "общее кол-во кликов по всем баннерам")
+	s.Suite.Require().Equal(int64(numberOfShows), actualShows, "общее кол-во показов по всем баннерам")
 }

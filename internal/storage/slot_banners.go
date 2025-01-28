@@ -6,12 +6,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/customerrors"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
 
 func (s *Storage) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
-	res, err := s.DB.ExecContext(ctx, `INSERT INTO slot_banners 
+	res, err := s.DB.Exec(ctx, `INSERT INTO slot_banners 
 		(slot_id, banner_id) 
 		VALUES ($1, $2)`,
 		slotID,
@@ -21,11 +22,7 @@ func (s *Storage) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, ban
 		return err
 	}
 
-	cnt, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
+	cnt := res.RowsAffected()
 	if cnt == 0 {
 		return customerrors.NotFound{
 			Message: fmt.Sprintf("Failed to add banner Id = \"%v\" to slot id = \"%v\"", bannerID, slotID),
@@ -36,16 +33,12 @@ func (s *Storage) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, ban
 }
 
 func (s *Storage) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) error {
-	res, err := s.DB.ExecContext(ctx, "DELETE FROM slot_banners WHERE slot_id = $1 AND banner_id = $2", slotID, bannerID)
+	res, err := s.DB.Exec(ctx, "DELETE FROM slot_banners WHERE slot_id = $1 AND banner_id = $2", slotID, bannerID)
 	if err != nil {
 		return err
 	}
 
-	cnt, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
+	cnt := res.RowsAffected()
 	if cnt == 0 {
 		return customerrors.NotFound{
 			Message: fmt.Sprintf("Banner id = \"%v\" not found in slot id = \"%v\"", bannerID, slotID),
@@ -63,7 +56,7 @@ func (s *Storage) GetSlotBanner(
 	var entity domain.Banner
 	var description sql.NullString
 
-	err := s.DB.QueryRowContext(ctx,
+	err := s.DB.QueryRow(ctx,
 		`SELECT b.id, b.description 
 		FROM banners b 
 		INNER JOIN slot_banners sb ON sb.banner_id = b.id 
@@ -74,7 +67,7 @@ func (s *Storage) GetSlotBanner(
 		&entity.ID,
 		&description,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.Banner{}, customerrors.NotFound{
 			Message: fmt.Sprintf("Slot id = \"%v\" does not containt banner id = %v", slotID, bannerID),
 		}
@@ -92,14 +85,14 @@ func (s *Storage) GetSlotBanner(
 
 func (s *Storage) ListSlotBanners(ctx context.Context, slotID domain.SlotID) ([]domain.Banner, error) {
 	result := make([]domain.Banner, 0)
-	rows, err := s.DB.QueryContext(ctx,
+	rows, err := s.DB.Query(ctx,
 		`SELECT b.id, b.description 
 		FROM banners b 
 		INNER JOIN slot_banners sb ON sb.banner_id = b.id 
 		WHERE sb.slot_id = $1`,
 		slotID,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return result, nil
 	}
 	if err != nil {
