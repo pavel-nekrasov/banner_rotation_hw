@@ -44,8 +44,8 @@ func (a *App) ClickBanner(
 
 	key := appdomain.GroupSlotKey{GroupID: groupID, SlotID: slotID}
 	// лочимся на конкретном ключе, чтобы не мешать обработке событий с другим ключом (Group/Slot)
-	a.keyMut.Lock(key)
-	defer a.keyMut.Unlock(key)
+	a.groupSlotKeys.Lock(key)
+	defer a.groupSlotKeys.Unlock(key)
 
 	statData, err := a.getStatData(ctx, key)
 	if err != nil {
@@ -91,8 +91,8 @@ func (a *App) SelectBanner(
 
 	key := appdomain.GroupSlotKey{GroupID: groupID, SlotID: slotID}
 	// лочимся на конкретном ключе, чтобы не мешать обработке событий с другим ключом (Group/Slot)
-	a.keyMut.Lock(key)
-	defer a.keyMut.Unlock(key)
+	a.groupSlotKeys.Lock(key)
+	defer a.groupSlotKeys.Unlock(key)
 
 	statData, err := a.getStatData(ctx, key)
 	if err != nil {

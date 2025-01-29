@@ -15,23 +15,23 @@ type DataItem struct {
 	mutex  sync.Mutex
 }
 
-type MultiMutex[K comparable] struct {
+type ObjectMutex[K comparable] struct {
 	ctx     context.Context
 	mutexes sync.Map
 	mut     sync.RWMutex
 	logger  common.Logger
 }
 
-func NewMultiMutex[K comparable](ctx context.Context, logger common.Logger) *MultiMutex[K] {
-	obj := &MultiMutex[K]{
+func NewObjectMutex[K comparable](ctx context.Context, logger common.Logger) *ObjectMutex[K] {
+	obj := &ObjectMutex[K]{
 		ctx:    ctx,
 		logger: logger,
 	}
-	obj.startCollector()
+	obj.startGC()
 	return obj
 }
 
-func (m *MultiMutex[K]) Lock(key K) {
+func (m *ObjectMutex[K]) Lock(key K) {
 	m.mut.RLock()
 	defer m.mut.RUnlock()
 
@@ -47,7 +47,7 @@ func (m *MultiMutex[K]) Lock(key K) {
 	syncObj.locked = true
 }
 
-func (m *MultiMutex[K]) Unlock(key K) {
+func (m *ObjectMutex[K]) Unlock(key K) {
 	data, ok := m.mutexes.Load(key)
 	if !ok {
 		panic("unlock: key not found")
@@ -66,7 +66,7 @@ func (m *MultiMutex[K]) Unlock(key K) {
 	syncObj.mutex.Unlock()
 }
 
-func (m *MultiMutex[K]) startCollector() {
+func (m *ObjectMutex[K]) startGC() {
 	go func() {
 		ticker := time.NewTicker(collectIntervalSec * time.Second)
 
@@ -82,7 +82,7 @@ func (m *MultiMutex[K]) startCollector() {
 	}()
 }
 
-func (m *MultiMutex[K]) collectKeys() {
+func (m *ObjectMutex[K]) collectKeys() {
 	var lockedCnt, totalCnt int
 	keysToDelete := make([]K, 0)
 	m.mut.Lock()

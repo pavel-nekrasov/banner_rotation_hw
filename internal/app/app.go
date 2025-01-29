@@ -21,7 +21,8 @@ type App struct {
 	logger              common.Logger
 	storage             Storage
 	publisher           Publisher
-	keyMut              *cache.MultiMutex[appdomain.GroupSlotKey]
+	groupSlotKeys       *cache.ObjectMutex[appdomain.GroupSlotKey]
+	slotKeys            *cache.ObjectMutex[domain.SlotID]
 	bannersCache        cache.Cache[domain.BannerID, domain.Banner]
 	groupsCache         cache.Cache[domain.GroupID, domain.Group]
 	slotsCache          cache.Cache[domain.SlotID, domain.Slot]
@@ -94,7 +95,8 @@ func New(
 		storage:             storage,
 		publisher:           publisher,
 		config:              config,
-		keyMut:              cache.NewMultiMutex[appdomain.GroupSlotKey](ctx, logger),
+		groupSlotKeys:       cache.NewObjectMutex[appdomain.GroupSlotKey](ctx, logger),
+		slotKeys:            cache.NewObjectMutex[domain.SlotID](ctx, logger),
 		groupsCache:         cache.NewLRUCache[domain.GroupID, domain.Group](config.L1Capacity),
 		slotsCache:          cache.NewLRUCache[domain.SlotID, domain.Slot](config.L1Capacity),
 		bannersCache:        cache.NewLRUCache[domain.BannerID, domain.Banner](config.L1Capacity),

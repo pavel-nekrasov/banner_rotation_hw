@@ -58,6 +58,10 @@ func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, ba
 }
 
 func (a *App) getAllowedBanners(ctx context.Context, slotID domain.SlotID) (bannersCache, error) {
+	// лочимся на конкретном слоте чтобы избежать паралельной загрузки баннеров для одного и того же слота
+	a.slotKeys.Lock(slotID)
+	defer a.slotKeys.Unlock(slotID)
+
 	result, ok := a.allowedBannersCache.Get(slotID)
 	if !ok {
 		banners, err := a.storage.ListSlotBanners(ctx, slotID)
