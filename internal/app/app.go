@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 
 	appdomain "github.com/pavel-nekrasov/banner_rotation_hw/internal/app/domain"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/cache"
@@ -18,17 +17,16 @@ type (
 )
 
 type App struct {
-	config                  config.CacheConf
-	logger                  common.Logger
-	storage                 Storage
-	publisher               Publisher
-	mut                     sync.RWMutex
-	keyMut                  *cache.MultiMutex[appdomain.GroupSlotKey]
-	bannersCache            cache.Cache[domain.BannerID, domain.Banner]
-	groupsCache             cache.Cache[domain.GroupID, domain.Group]
-	slotsCache              cache.Cache[domain.SlotID, domain.Slot]
-	allowedSlotBannersCache cache.Cache[domain.SlotID, bannersCache]
-	rotationsCache          cache.Cache[appdomain.GroupSlotKey, *appdomain.StatData]
+	config              config.CacheConf
+	logger              common.Logger
+	storage             Storage
+	publisher           Publisher
+	keyMut              *cache.MultiMutex[appdomain.GroupSlotKey]
+	bannersCache        cache.Cache[domain.BannerID, domain.Banner]
+	groupsCache         cache.Cache[domain.GroupID, domain.Group]
+	slotsCache          cache.Cache[domain.SlotID, domain.Slot]
+	allowedBannersCache cache.Cache[domain.SlotID, bannersCache]
+	rotationsCache      cache.Cache[appdomain.GroupSlotKey, *appdomain.StatData]
 }
 
 type Storage interface {
@@ -55,7 +53,11 @@ type Storage interface {
 	GetSlotBanner(ctx context.Context, slotID domain.SlotID, bannerID domain.BannerID) (domain.Banner, error)
 	ListSlotBanners(ctx context.Context, slotID domain.SlotID) ([]domain.Banner, error)
 
-	ListBannerStats(ctx context.Context, groupID domain.GroupID, slotID domain.SlotID) ([]domain.BannerStat, error)
+	ListBannerStats(
+		ctx context.Context,
+		groupID domain.GroupID,
+		slotID domain.SlotID,
+	) ([]domain.BannerStat, error)
 	IncrementBannerStatClick(
 		ctx context.Context,
 		groupID domain.GroupID,
@@ -88,16 +90,16 @@ func New(
 	config config.CacheConf,
 ) *App {
 	return &App{
-		logger:                  logger,
-		storage:                 storage,
-		publisher:               publisher,
-		config:                  config,
-		keyMut:                  cache.NewMultiMutex[appdomain.GroupSlotKey](ctx, logger),
-		groupsCache:             cache.NewLRUCache[domain.GroupID, domain.Group](config.L1Capacity),
-		slotsCache:              cache.NewLRUCache[domain.SlotID, domain.Slot](config.L1Capacity),
-		bannersCache:            cache.NewLRUCache[domain.BannerID, domain.Banner](config.L1Capacity),
-		allowedSlotBannersCache: cache.NewLRUCache[domain.SlotID, bannersCache](config.L1Capacity),
-		rotationsCache:          cache.NewLRUCache[appdomain.GroupSlotKey, *appdomain.StatData](config.L1Capacity),
+		logger:              logger,
+		storage:             storage,
+		publisher:           publisher,
+		config:              config,
+		keyMut:              cache.NewMultiMutex[appdomain.GroupSlotKey](ctx, logger),
+		groupsCache:         cache.NewLRUCache[domain.GroupID, domain.Group](config.L1Capacity),
+		slotsCache:          cache.NewLRUCache[domain.SlotID, domain.Slot](config.L1Capacity),
+		bannersCache:        cache.NewLRUCache[domain.BannerID, domain.Banner](config.L1Capacity),
+		allowedBannersCache: cache.NewLRUCache[domain.SlotID, bannersCache](config.L1Capacity),
+		rotationsCache:      cache.NewLRUCache[appdomain.GroupSlotKey, *appdomain.StatData](config.L1Capacity),
 	}
 }
 

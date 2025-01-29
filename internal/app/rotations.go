@@ -47,17 +47,12 @@ func (a *App) ClickBanner(
 	a.keyMut.Lock(key)
 	defer a.keyMut.Unlock(key)
 
-	statData, err := a.loadStatData(ctx, key)
+	statData, err := a.getStatData(ctx, key)
 	if err != nil {
 		return err
 	}
 
-	if statData.Empty() {
-		return ErrNoBannersAssignedForSlot
-	}
-
 	statData.Recalculate()
-
 	err = a.storage.IncrementBannerStatClick(ctx, groupID, slotID, bannerID)
 	if err != nil {
 		return err
@@ -99,18 +94,13 @@ func (a *App) SelectBanner(
 	a.keyMut.Lock(key)
 	defer a.keyMut.Unlock(key)
 
-	statData, err := a.loadStatData(ctx, key)
+	statData, err := a.getStatData(ctx, key)
 	if err != nil {
 		return emptyBannerID, err
 	}
 
-	if statData.Empty() {
-		return emptyBannerID, ErrNoBannersAssignedForSlot
-	}
-
 	statData.Recalculate()
 	bestBannerID := statData.BestBanner()
-
 	err = a.storage.IncrementBannerStatShow(ctx, groupID, slotID, bestBannerID)
 	if err != nil {
 		return emptyBannerID, err
@@ -129,41 +119,36 @@ func (a *App) SelectBanner(
 	return bestBannerID, nil
 }
 
-func (a *App) loadStatData(
+func (a *App) getStatData(
 	ctx context.Context,
 	key appdomain.GroupSlotKey,
 ) (*appdomain.StatData, error) {
-	var statData *appdomain.StatData
+	var result *appdomain.StatData
 
-	statData, ok := a.rotationsCache.Get(key)
+	result, ok := a.rotationsCache.Get(key)
 	if ok {
-		return statData, nil
-	}
-
-	a.mut.Lock()
-	defer a.mut.Unlock()
-
-	// double check
-	statData, ok = a.rotationsCache.Get(key)
-	if ok {
-		return statData, nil
+		return result, nil
 	}
 
 	// получаем список разрешенных баннеров для слота
-	allowedBanners, err := a.listAllowedSlotBanners(ctx, key.SlotID)
+	allowedBanners, err := a.getAllowedBanners(ctx, key.SlotID)
 	if err != nil {
 		return nil, err
 	}
+	if allowedBanners.Empty() {
+		return nil, ErrNoBannersAssignedForSlot
+	}
+
 	// получаем текущую статистику из БД по группе/слоту
 	bannerStats, err := a.storage.ListBannerStats(ctx, key.GroupID, key.SlotID)
 	if err != nil {
 		return nil, err
 	}
 
-	statData = appdomain.NewStatData()
+	result = appdomain.NewStatData()
 	// заполняем из списка разрешенных баннеров дефолтными значениями
 	allowedBanners.Range(func(key domain.BannerID, _ struct{}) {
-		statData.Set(key, &domain.BannerStat{
+		result.Set(key, &domain.BannerStat{
 			BannerID:   key,
 			ShowCount:  1,
 			ClickCount: 1,
@@ -171,10 +156,10 @@ func (a *App) loadStatData(
 	})
 	// заполняем данными из БД (переписывая где надо дефолтные значения из предыдущего шага)
 	for _, row := range bannerStats {
-		statData.Set(row.BannerID, &row)
+		result.Set(row.BannerID, &row)
 	}
-	a.rotationsCache.Set(key, statData)
-	return statData, nil
+	a.rotationsCache.Set(key, result)
+	return result, nil
 }
 
 func (a *App) notify(payload appdomain.NotificationEvent) error {

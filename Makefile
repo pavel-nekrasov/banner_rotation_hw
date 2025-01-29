@@ -29,7 +29,6 @@ docker-env-up:
 	docker compose -f deploy/docker-compose.yml up -d rotator_db rotator_mq
 docker-migrate:
 	docker compose -f deploy/docker-compose.yml up migrate
-
 run:
 	make docker-build
 	make docker-env-up
@@ -40,13 +39,6 @@ stop:
 
 
 
-install-lint-deps:
-	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.62.2
-
-lint: install-lint-deps
-	golangci-lint run ./...
-
-
 build-migrator:
 	go build -v -o $(BIN_MIGRATOR) -ldflags "$(LDFLAGS)" ./cmd/migrate
 
@@ -55,6 +47,13 @@ build-server:
 
 build: build-server build-migrator
 
+
+
+install-lint-deps:
+	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.62.2
+
+lint: install-lint-deps
+	golangci-lint run ./...
 
 test:
 	go test -count=1 -race -timeout=5m ./internal/...

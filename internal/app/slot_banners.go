@@ -20,18 +20,12 @@ func (a *App) AddBannerToSlot(ctx context.Context, slotID domain.SlotID, bannerI
 		return err
 	}
 
-	a.mut.Lock()
-	defer a.mut.Unlock()
-
 	err = a.storage.AddBannerToSlot(ctx, slotID, bannerID)
 	if err != nil {
 		return err
 	}
-
-	allowedBannersCache, ok := a.allowedSlotBannersCache.Get(slotID)
-	if ok {
-		allowedBannersCache.Set(bannerID, struct{}{})
-	}
+	// очищаем кеш разрешенных баннеров для данного слота
+	a.allowedBannersCache.Remove(slotID)
 	// очищаем кэш ротаций чтобы перегрузилась статистика ротаций
 	a.rotationsCache.Clear()
 
@@ -51,37 +45,32 @@ func (a *App) RemoveBannerFromSlot(ctx context.Context, slotID domain.SlotID, ba
 		return err
 	}
 
-	a.mut.Lock()
-	defer a.mut.Unlock()
-
 	err = a.storage.RemoveBannerFromSlot(ctx, slotID, bannerID)
 	if err != nil {
 		return err
 	}
-	allowedBannersCache, ok := a.allowedSlotBannersCache.Get(slotID)
-	if ok {
-		allowedBannersCache.Remove(bannerID)
-	}
+	// очищаем кеш разрешенных баннеров для данного слота
+	a.allowedBannersCache.Remove(slotID)
 	// очищаем кэш ротаций чтобы перегрузилась статистика ротаций
 	a.rotationsCache.Clear()
 
 	return nil
 }
 
-func (a *App) listAllowedSlotBanners(ctx context.Context, slotID domain.SlotID) (bannersCache, error) {
-	bannersCache, ok := a.allowedSlotBannersCache.Get(slotID)
+func (a *App) getAllowedBanners(ctx context.Context, slotID domain.SlotID) (bannersCache, error) {
+	result, ok := a.allowedBannersCache.Get(slotID)
 	if !ok {
 		banners, err := a.storage.ListSlotBanners(ctx, slotID)
 		if err != nil {
 			return nil, err
 		}
-		bannersCache = cache.NewMapCache[domain.BannerID, struct{}]()
+		result = cache.NewMapCache[domain.BannerID, struct{}]()
 		for _, b := range banners {
-			bannersCache.Set(b.ID, struct{}{})
+			result.Set(b.ID, struct{}{})
 		}
-		a.allowedSlotBannersCache.Set(slotID, bannersCache)
+		a.allowedBannersCache.Set(slotID, result)
 	}
-	return bannersCache, nil
+	return result, nil
 }
 
 func (a *App) checkAllowedSlotBanner(
@@ -89,7 +78,7 @@ func (a *App) checkAllowedSlotBanner(
 	slotID domain.SlotID,
 	bannerID domain.BannerID,
 ) (bool, error) {
-	bannersCache, err := a.listAllowedSlotBanners(ctx, slotID)
+	bannersCache, err := a.getAllowedBanners(ctx, slotID)
 	if err != nil {
 		return false, err
 	}

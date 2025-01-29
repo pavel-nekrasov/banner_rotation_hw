@@ -62,6 +62,13 @@ func (c *lruCache[K, D]) Len() int {
 	return len(c.items)
 }
 
+func (c *lruCache[K, D]) Empty() bool {
+	c.mut.RLock()
+	defer c.mut.RUnlock()
+
+	return len(c.items) == 0
+}
+
 func (c *lruCache[K, D]) Remove(key K) {
 	c.mut.Lock()
 	defer c.mut.Unlock()

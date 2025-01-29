@@ -38,6 +38,13 @@ func (c *mapCache[K, D]) Len() int {
 	return len(c.items)
 }
 
+func (c *mapCache[K, D]) Empty() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return len(c.items) == 0
+}
+
 func (c *mapCache[K, D]) Range(handler func(key K, data D)) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
