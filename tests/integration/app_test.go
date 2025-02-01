@@ -44,13 +44,7 @@ func (s *AppIntegrationSuite) SetupSuite() {
 	s.random = rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 	s.config = config.NewRotatorConfig("/app/config/server_config.toml")
 	s.logger = logger.New(s.config.Logger.Level, s.config.Logger.Output)
-	s.dbConn = storage.NewConnection(
-		s.config.Storage.Host,
-		s.config.Storage.Port,
-		s.config.Storage.DBName,
-		s.config.Storage.User,
-		s.config.Storage.Password,
-	)
+	s.dbConn = storage.NewConnection(s.config.Storage)
 	s.storage = storage.NewStorage(s.dbConn)
 }
 

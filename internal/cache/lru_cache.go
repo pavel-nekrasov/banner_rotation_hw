@@ -2,19 +2,19 @@ package cache
 
 import "sync"
 
-type lruEntry[K comparable, D interface{}] struct {
+type lruEntry[K comparable, D any] struct {
 	Key  K
 	Data D
 }
 
-type lruCache[K comparable, D interface{}] struct {
+type lruCache[K comparable, D any] struct {
 	mut      sync.RWMutex
 	capacity int
 	queue    LinkedList[lruEntry[K, D]]
 	items    map[K]*ListItem[lruEntry[K, D]]
 }
 
-func NewLRUCache[K comparable, D interface{}](capacity int) Cache[K, D] {
+func NewLRUCache[K comparable, D any](capacity int) Cache[K, D] {
 	return &lruCache[K, D]{
 		capacity: capacity,
 		queue:    NewList[lruEntry[K, D]](),

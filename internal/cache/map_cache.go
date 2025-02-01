@@ -2,12 +2,12 @@ package cache
 
 import "sync"
 
-type mapCache[K comparable, D interface{}] struct {
+type mapCache[K comparable, D any] struct {
 	mu    sync.RWMutex
 	items map[K]D
 }
 
-func NewMapCache[K comparable, D interface{}]() Cache[K, D] {
+func NewMapCache[K comparable, D any]() Cache[K, D] {
 	return &mapCache[K, D]{
 		items: make(map[K]D),
 	}

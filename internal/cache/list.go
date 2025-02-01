@@ -2,7 +2,7 @@ package cache
 
 import "sync"
 
-type LinkedList[T interface{}] interface {
+type LinkedList[T any] interface {
 	Len() int
 	Front() *ListItem[T]
 	Back() *ListItem[T]
@@ -12,14 +12,14 @@ type LinkedList[T interface{}] interface {
 	MoveToFront(i *ListItem[T])
 }
 
-type list[T interface{}] struct {
+type list[T any] struct {
 	mut   sync.RWMutex
 	front *ListItem[T]
 	back  *ListItem[T]
 	len   int
 }
 
-func NewList[T interface{}]() LinkedList[T] {
+func NewList[T any]() LinkedList[T] {
 	return new(list[T])
 }
 

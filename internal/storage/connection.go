@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/jackc/pgx/stdlib" // need import pgx
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/pavel-nekrasov/banner_rotation_hw/internal/config"
 	goose "github.com/pressly/goose/v3"
 )
 
@@ -15,9 +16,16 @@ type Connection struct {
 	DB  *pgxpool.Pool
 }
 
-func NewConnection(host string, port int, dbname, user, password string) *Connection {
+func NewConnection(config config.StorageConf) *Connection {
 	return &Connection{
-		dsn: fmt.Sprintf("postgres://%v:%v@%v:%v/%v", user, password, host, port, dbname),
+		dsn: fmt.Sprintf(
+			"postgres://%v:%v@%v:%v/%v",
+			config.User,
+			config.Password,
+			config.Host,
+			config.Port,
+			config.DBName,
+		),
 	}
 }
 

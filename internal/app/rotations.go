@@ -7,6 +7,7 @@ import (
 	"time"
 
 	appdomain "github.com/pavel-nekrasov/banner_rotation_hw/internal/app/domain"
+	"github.com/pavel-nekrasov/banner_rotation_hw/internal/consts"
 	"github.com/pavel-nekrasov/banner_rotation_hw/internal/domain"
 )
 
@@ -61,7 +62,7 @@ func (a *App) ClickBanner(
 	statData.IncrementClick(bannerID)
 
 	a.notify(appdomain.NotificationEvent{
-		EventType: "click",
+		EventType: consts.EventTypeClick,
 		GroupID:   key.GroupID,
 		SlotID:    key.SlotID,
 		BannerID:  bannerID,
@@ -109,7 +110,7 @@ func (a *App) SelectBanner(
 	statData.IncrementShow(bestBannerID)
 
 	a.notify(appdomain.NotificationEvent{
-		EventType: "show",
+		EventType: consts.EventTypeShow,
 		GroupID:   key.GroupID,
 		SlotID:    key.SlotID,
 		BannerID:  bestBannerID,

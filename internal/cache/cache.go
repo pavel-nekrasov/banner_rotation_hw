@@ -1,6 +1,6 @@
 package cache
 
-type Cache[K comparable, D interface{}] interface {
+type Cache[K comparable, D any] interface {
 	Clear()
 	Get(key K) (D, bool)
 	Empty() bool

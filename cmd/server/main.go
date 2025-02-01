@@ -40,14 +40,7 @@ func main() {
 	defer cancel()
 
 	// db
-	dbConn := storage.NewConnection(
-		config.Storage.Host,
-		config.Storage.Port,
-		config.Storage.DBName,
-		config.Storage.User,
-		config.Storage.Password,
-	)
-
+	dbConn := storage.NewConnection(config.Storage)
 	storage := storage.NewStorage(
 		dbConn,
 	)

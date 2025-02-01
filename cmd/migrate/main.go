@@ -45,13 +45,7 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	dbConn := storage.NewConnection(
-		config.Storage.Host,
-		config.Storage.Port,
-		config.Storage.DBName,
-		config.Storage.User,
-		config.Storage.Password,
-	)
+	dbConn := storage.NewConnection(config.Storage)
 
 	logg.Info("Applying migrations...")
 	err := dbConn.Migrate(ctx, "/migrations")

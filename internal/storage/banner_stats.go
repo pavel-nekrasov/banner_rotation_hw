@@ -83,23 +83,22 @@ func (s *Storage) GetBannerStat(
 func (s *Storage) BannerStatTotals(
 	ctx context.Context,
 ) (int64, int64, error) {
-	var showSum, clickSum, recCnt int64
+	var showSum, clickSum int64
 	err := s.conn.DB.QueryRow(ctx,
-		`SELECT sum(r.show_count) AS show_sum, sum(r.click_count) AS click_sum, count(r.id) AS rec_count 
+		`SELECT sum(r.show_count) - count(r.id) AS show_sum, sum(r.click_count) - count(r.id) AS click_sum 
 		FROM banner_stats r 
 		INNER JOIN slot_banners sb ON sb.banner_id = r.banner_id AND sb.slot_id = r.slot_id`,
 	).Scan(&showSum,
 		&clickSum,
-		&recCnt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, 0, customerrors.NotFound{}
+		return 0, 0, nil
 	}
 	if err != nil {
 		return 0, 0, err
 	}
 
-	return showSum - recCnt, clickSum - recCnt, nil
+	return showSum, clickSum, nil
 }
 
 func (s *Storage) IncrementBannerStatClick(

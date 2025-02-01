@@ -1,6 +1,6 @@
 package cache
 
-type ListItem[T interface{}] struct {
+type ListItem[T any] struct {
 	Value T
 	Next  *ListItem[T]
 	Prev  *ListItem[T]

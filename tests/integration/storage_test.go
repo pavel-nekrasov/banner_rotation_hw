@@ -23,13 +23,7 @@ func TestStorageIntegrationSuite(t *testing.T) {
 
 func (s *StorageIntegrationSuite) SetupSuite() {
 	config := config.NewRotatorConfig("/app/config/server_config.toml")
-	s.dbConn = storage.NewConnection(
-		config.Storage.Host,
-		config.Storage.Port,
-		config.Storage.DBName,
-		config.Storage.User,
-		config.Storage.Password,
-	)
+	s.dbConn = storage.NewConnection(config.Storage)
 	s.storage = storage.NewStorage(s.dbConn)
 }
 
