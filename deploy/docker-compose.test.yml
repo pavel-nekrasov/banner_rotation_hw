@@ -1,0 +1,63 @@
+services:
+
+  rotator_test_migrate:
+    container_name: rotator_test_migrate
+    env_file:
+      - ../.env.local
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_migrate
+    image: rotator_test_migrate_img
+    depends_on:
+      rotator_db:
+        condition: service_healthy
+      rotator_mq:
+        condition: service_started
+  
+  rotator_test:
+    container_name: rotator_test
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_test
+    image: rotator_test_img
+    depends_on:
+      rotator_db:
+        condition: service_started
+      rotator_mq:
+        condition: service_started
+
+  rotator_db:
+    container_name: rotator_db
+    image: postgres:16.1-alpine3.19
+    env_file:
+      - ../.env.local
+    volumes:
+      - rotator_pgdata_test:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  rotator_mq:
+    container_name: rotator_mq
+    image: rabbitmq:3-management-alpine
+    hostname: rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rotator_rabbitdata_test:/var/lib/rabbitmq
+    restart: always
+
+networks:
+  default:
+    name: rotator-test-network
+
+volumes:
+  rotator_pgdata_test:
+  rotator_rabbitdata_test:

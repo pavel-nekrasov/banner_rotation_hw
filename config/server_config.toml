@@ -1,0 +1,24 @@
+[logger]
+level = "DEBUG"
+output = "stdout"
+
+[endpoint]
+host = ""
+grpcPort = 15000
+
+[storage]
+host = "rotator_db"
+port = 5432
+dbname = "rotator_db"
+user = "otus"
+password = "password"
+
+[cache]
+L1Capacity = 100
+
+[queue]
+host = "rotator_mq"
+port = 5672
+exchange = "banner_rotation_stats"
+user = "guest"
+password = "guest"

@@ -1,0 +1,10 @@
+[logger]
+level = "DEBUG"
+output = "stdout"
+
+[storage]
+host = "rotator_db"
+port = 5432
+dbname = "rotator_db"
+user = "otus"
+password = "password"

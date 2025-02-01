@@ -1,0 +1,124 @@
+syntax = "proto3";
+option go_package = "./;pb";
+
+import "google/protobuf/empty.proto";
+
+service Banners {
+  rpc ShowBanner (SelectBannerRequest) returns (SelectBannerResponse) {
+  }
+
+  rpc ClickBanner (ClickBannerRequest) returns (google.protobuf.Empty) {
+  }
+  
+  rpc AddBannerToSlot (AddBannerToSlotRequest) returns (google.protobuf.Empty) {
+  }
+
+  rpc RemoveBannerFromSlot (RemoveBannerFromSlotRequest) returns (google.protobuf.Empty) {
+  }
+
+
+  rpc CreateBanner (BannerRequest) returns (SingleBannerResponse){
+  }
+
+  rpc UpdateBanner (BannerRequest) returns (SingleBannerResponse) {
+  }
+
+  rpc GetBanner (BannerIdRequest) returns (SingleBannerResponse) {
+  }
+
+  rpc DeleteBanner (BannerIdRequest) returns (google.protobuf.Empty) {
+  }
+
+
+  rpc CreateGroup (GroupRequest) returns (SingleGroupResponse){
+  }
+
+  rpc UpdateGroup (GroupRequest) returns (SingleGroupResponse) {
+  }
+
+  rpc GetGroup (GroupIdRequest) returns (SingleGroupResponse) {
+  }
+
+  rpc DeleteGroup (GroupIdRequest) returns (google.protobuf.Empty) {
+  }
+
+
+  rpc CreateSlot (SlotRequest) returns (SingleSlotResponse){
+  }
+
+  rpc UpdateSlot (SlotRequest) returns (SingleSlotResponse) {
+  }
+
+  rpc GetSlot (SlotIdRequest) returns (SingleSlotResponse) {
+  }
+
+  rpc DeleteSlot (SlotIdRequest) returns (google.protobuf.Empty) {
+  }
+}
+
+message SelectBannerRequest {
+  string groupID = 1;
+  string slotID = 2;
+}
+
+message SelectBannerResponse {
+  string bannerID = 1;
+}
+
+message ClickBannerRequest {
+  string groupID = 1;
+  string slotID = 2;
+  string bannerID = 3;
+}
+
+message AddBannerToSlotRequest {
+  string slotID = 1;
+  string bannerID = 2;
+}
+
+message RemoveBannerFromSlotRequest {
+  string slotID = 1;
+  string bannerID = 2;
+}
+
+message BannerRequest {
+  string ID = 1;
+  string Description = 2;
+}
+
+message SingleBannerResponse {
+  string ID = 1;
+  string Description = 2;
+}
+
+message BannerIdRequest {
+  string ID = 1;
+}
+
+message GroupRequest {
+  string ID = 1;
+  string Description = 2;
+}
+
+message SingleGroupResponse {
+  string ID = 1;
+  string Description = 2;
+}
+
+message GroupIdRequest {
+  string ID = 1;
+}
+
+message SlotRequest {
+  string ID = 1;
+  string Description = 2;
+}
+
+message SingleSlotResponse {
+  string ID = 1;
+  string Description = 2;
+}
+
+message SlotIdRequest {
+  string ID = 1;
+}
