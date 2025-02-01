@@ -1,37 +1,9 @@
-# Собираем в гошке
-FROM golang:1.23 as build
+FROM gomicro/goose
 
-ENV BIN_FILE /opt/banner_rotator/rotator_migrator
-ENV CODE_DIR /go/src/
+ADD ./migrations/*.sql /migrations/
+ADD migrate-entrypoint.sh /migrations/
+RUN chgrp -R 0 /migrations && \
+    chmod -R g=u /migrations/ && \
+    chmod g+x /migrations/migrate-entrypoint.sh
 
-WORKDIR ${CODE_DIR}
-
-# Кэшируем слои с модулями
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-
-COPY . ${CODE_DIR}
-
-# Собираем статический бинарник Go (без зависимостей на Си API),
-# иначе он не будет работать в alpine образе.
-ARG LDFLAGS
-RUN CGO_ENABLED=0 go build \
-        -ldflags "$LDFLAGS" \
-        -o ${BIN_FILE} cmd/migrate/*
-
-# На выходе тонкий образ
-FROM alpine:3.9
-
-LABEL ORGANIZATION="OTUS Online Education"
-LABEL SERVICE="Banner rotator"
-LABEL MAINTAINERS="sileaudivide@gmail.com"
-
-ENV BIN_FILE "/opt/banner_rotator/rotator_migrator"
-COPY --from=build ${BIN_FILE} ${BIN_FILE}
-
-ENV CONFIG_FILE /etc/banner_rotator/migrate_config.toml
-COPY ./config/migrate_config.toml ${CONFIG_FILE}
-COPY ./migrations /migrations
-
-CMD ${BIN_FILE} -config ${CONFIG_FILE}
+ENTRYPOINT ["/migrations/migrate-entrypoint.sh"]

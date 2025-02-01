@@ -2,6 +2,8 @@ services:
 
   rotator_test_migrate:
     container_name: rotator_test_migrate
+    env_file:
+      - ../.env.local
     build:
       context: ../
       dockerfile: ./build/Dockerfile_migrate

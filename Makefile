@@ -1,6 +1,5 @@
 
 BIN := "./bin/rotator_server"
-BIN_MIGRATOR := "./bin/rotator_migrator"
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
@@ -39,13 +38,10 @@ stop:
 
 
 
-build-migrator:
-	go build -v -o $(BIN_MIGRATOR) -ldflags "$(LDFLAGS)" ./cmd/migrate
-
 build-server:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/server
 
-build: build-server build-migrator
+build: build-server
 
 
 

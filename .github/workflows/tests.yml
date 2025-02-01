@@ -3,7 +3,7 @@ name: Otus homework tests
 on:
   push:
     branches:
-      - hw*
+      - *
 
 env:
   GO111MODULE: "on"
